@@ -3,7 +3,6 @@ import sys
 import tqdm
 import pickle
 sys.path.append('..')
-sys.path.append('../Script/Burn/')
 
 
 
