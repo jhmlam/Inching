@@ -2,7 +2,6 @@ import torch
 import sys
 import tqdm
 sys.path.append('..')
-sys.path.append('../Script/Burn/')
 
 
 
