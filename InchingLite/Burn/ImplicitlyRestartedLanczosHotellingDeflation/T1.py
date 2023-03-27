@@ -313,7 +313,7 @@ def S_HeigvalIRLMHD_HeigvecIRLMHD(A,
         assert k < n, "ABORTED. k must be smaller than n"
         assert A.ndim == 2 , "ABORTED. It is a tensor not rank 2!"
         assert A.shape[0] == A.shape[1], "ABORTED. square"
-        assert (k%8 == 0), "ABORTED. Let's do it with a multiple of 8"
+        #assert (k%8 == 0), "ABORTED. Let's do it with a multiple of 8"
         assert k >= 32, "ABORTED. we did not test on less than 32 modes, as the number ritz vectors is too small."
         assert k > 1, "ABORTED. This implememntation only works with k > 1"
 
@@ -321,7 +321,7 @@ def S_HeigvalIRLMHD_HeigvecIRLMHD(A,
         p = min(max(2 * k, k + 32), n - 1)
 
         # NOTE Raise one more for k. Unfortunately, we need to keep one more    
-        k +=1
+        k += 2
 
         # NOTE The total basis
         m = k+p
@@ -440,7 +440,7 @@ def S_HeigvalIRLMHD_HeigvecIRLMHD(A,
     # Meory managemnt
     # =============================
 
-    xx = V[:k-1].T
+    xx = V[:k-2].T
     V = None
     alpha = None
     beta = None
@@ -450,7 +450,7 @@ def S_HeigvalIRLMHD_HeigvecIRLMHD(A,
 
 
 
-    return Teigval[:k-1], xx
+    return Teigval[:k-2], xx
 
 
 

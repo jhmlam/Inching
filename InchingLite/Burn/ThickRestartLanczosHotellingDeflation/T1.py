@@ -22,7 +22,7 @@ import sys
 sys.path.append('../InchingLite/Burn/')
 import InchingLite.Burn.Orthogonalization.T3
 import InchingLite.Burn.Orthogonalization.T2
-
+import InchingLite.Burn.Krylov.T3
 
 
 # ====================================
@@ -60,7 +60,7 @@ def S_HeigvalTRLMHD_HeigvecTRLMHD(a, k=32,
         assert a.shape[0] == a.shape[1], "ABORTED. square"
 
 
-        assert (k%8 == 0)
+        #assert (k%8 == 0)
         assert k >= 32, "ABORTED. we did not test on less than 32 modes, as the number ritz vectors is too small."
 
         # NOTE The workspace
