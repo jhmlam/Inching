@@ -109,7 +109,7 @@ do
         # Prody
         # =============================
         mkdir ../BenchmarkLinuxPrody0064_${j_machine}
-        sed "s#BenchmarkLinuxPrody0064#BenchmarkLinuxPrody0064_${j_machine}#g" ./Template/commandBenchmark_Prody_Linux_${i_PdbCif}_0064.py > commandBenchmark_Prody_Linux_${i_PdbCif}_0064_${i_machine}.py
+        sed "s#BenchmarkLinuxPrody0064#BenchmarkLinuxPrody0064_${j_machine}#g" ./Template/commandBenchmark_Prody_Linux_${i_PdbCif}_0064.py > commandBenchmark_Prody_Linux_${i_PdbCif}_0064_${j_machine}.py
 
         mkdir ../BenchmarkLinuxProdySparse0064_${j_machine}
         sed "s#BenchmarkLinuxProdySparse0064#BenchmarkLinuxProdySparse0064_${j_machine}#g" ./Template/commandBenchmark_ProdySparse_Linux_${i_PdbCif}_0064.py > commandBenchmark_ProdySparse_Linux_${i_PdbCif}_0064_${j_machine}.py

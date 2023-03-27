@@ -10,7 +10,7 @@ User_Platform = platform.system() # Windows Darwin Linux
 
 User_rc_Gamma = 8.0
 User_maxleafsize = 100
-User_n_mode = 64 - 6
+User_n_mode = 64 
 User_tol = 1e-15
 User_PlusI = 1.0
 PDBCIF = "Pdb"
@@ -65,7 +65,7 @@ if PART00_Import:
 
 
    sys.path.append('..')
-   sys.path.append('../InchingExam/Burn/')
+   sys.path.append('../InchingLite/Burn/')
 
 
    import torch
@@ -75,17 +75,17 @@ if PART00_Import:
 
 
    sys.path.append('..')
-   sys.path.append('../InchingExam/Burn/')
-   import InchingExam.util
-   import InchingExam.Fuel.Coordinate.T1
-   import InchingExam.Fuel.Coordinate.T2
-   import InchingExam.Burn.Coordinate.T1
-   import InchingExam.Burn.Coordinate.T3
+   sys.path.append('../InchingLite/Burn/')
+   import InchingLite.util
+   import InchingLite.Fuel.Coordinate.T1
+   import InchingLite.Fuel.Coordinate.T2
+   import InchingLite.Burn.Coordinate.T1
+   import InchingLite.Burn.Coordinate.T3
 
-   from InchingExam.Fuel.T1 import X_SparseCupyMatrix, Xnumpy_SparseCupyMatrixUngappped
+   from InchingLite.Fuel.T1 import X_SparseCupyMatrix, Xnumpy_SparseCupyMatrixUngappped
 
-   import InchingExam.Burn.Visualisation.T1
-   import InchingExam.Burn.Visualisation.T2
+   import InchingLite.Burn.Visualisation.T1
+   import InchingLite.Burn.Visualisation.T2
 
    # ============================
    # Some torch speed up tips
@@ -110,7 +110,7 @@ if PART00_Import:
    torch.set_default_dtype(torch.float64)
    torch.set_default_tensor_type(torch.cuda.DoubleTensor)
    try:
-      InchingExam.util.TorchEmptyCache()
+      InchingLite.util.TorchEmptyCache()
    except RuntimeError:
       print("The GPU is free to use. THere is no existing occupant")
    try:
@@ -130,11 +130,11 @@ if PART01_ListOfPDB:
          pdbavail, sizedict = pickle.load(fn)
    else:
 
-      pdbavail = [InchingExam.util.WinFileDirLinux(i) for i in pdbavail]
+      pdbavail = [InchingLite.util.WinFileDirLinux(i) for i in pdbavail]
       size = []
       for pdbfn in tqdm.tqdm(pdbavail):
 
-         X_df, X_top = InchingExam.util.BasicPdbCifLoading(pdbfn)
+         X_df, X_top = InchingLite.util.BasicPdbCifLoading(pdbfn)
          protein_xyz = X_df[['x','y','z']].to_numpy().astype(np.float64)
          size.append(protein_xyz.shape[0])
          del X_df, protein_xyz
@@ -182,7 +182,7 @@ for pdbfn in pdbavail:
     print(pdbfn)
     st = time.time()
 
-    X_df, X_top = InchingExam.util.BasicPdbCifLoading(pdbfn)
+    X_df, X_top = InchingLite.util.BasicPdbCifLoading(pdbfn)
     protein_xyz = X_df[['x','y','z']].to_numpy().astype(np.float64)
     # NOTE PDB format digit decimal do no destroy collinearity!
     protein_xyz -= np.around(protein_xyz.mean(axis= 0), decimals=4)
@@ -203,7 +203,7 @@ for pdbfn in pdbavail:
     # ===================================
     # NOTE Cuthill Order and Undo
     st = time.time()
-    cuthill_order, cuthill_undoorder = InchingExam.Fuel.Coordinate.T1.X_KdCuthillMckeeOrder(protein_xyz,  
+    cuthill_order, cuthill_undoorder = InchingLite.Fuel.Coordinate.T1.X_KdCuthillMckeeOrder(protein_xyz,  
                                 rc_Gamma = User_rc_Gamma, Reverse = True,
                                 )
     protein_xyz = protein_xyz[cuthill_order,:]
@@ -212,7 +212,7 @@ for pdbfn in pdbavail:
 
     
     #print(A)
-    from InchingExam.Burn.ImplicitlyRestartedLanczosHotellingDeflation.T1 import S_HeigvalIRLMHD_HeigvecIRLMHD
+    from InchingLite.Burn.ImplicitlyRestartedLanczosHotellingDeflation.T1 import S_HeigvalIRLMHD_HeigvecIRLMHD
     print('start eigsh cupy')
 
 
@@ -234,7 +234,7 @@ for pdbfn in pdbavail:
     PART03_MakeCupyHessian = True
     if PART03_MakeCupyHessian:
         # NOTE Nnz neighborhood after cuthill
-        NnzMinMaxDict, HalfNnz  = InchingExam.Fuel.Coordinate.T1.X_KdUngappedMinMaxNeighbor(protein_xyz, 
+        NnzMinMaxDict, HalfNnz  = InchingLite.Fuel.Coordinate.T1.X_KdUngappedMinMaxNeighbor(protein_xyz, 
                                     rc_Gamma = User_rc_Gamma, 
                                     maxleafsize = User_maxleafsize,
                                     CollectStat = False,
@@ -393,7 +393,7 @@ for pdbfn in pdbavail:
                 nmfactor = 1 
 
             if '3j3q' in pdbid:
-               InchingExam.util.SaveOneModeLinearisedAnime(
+               InchingLite.util.SaveOneModeLinearisedAnime(
                             torch.tensor(tempeigvec[User_TheModeToShow,cuthill_undoorder,:],
                                     dtype = torch.float64, device = torch.device('cpu')),
                             torch.tensor(X[cuthill_undoorder,:], device = torch.device('cpu'))*nmfactor,
@@ -409,7 +409,7 @@ for pdbfn in pdbavail:
                             RemoveOrig = True, # NOTE This flag remove the unmoved structure from the trajectory produce
                             )
             else:
-                InchingExam.util.SaveOneModeLinearisedAnime(
+                InchingLite.util.SaveOneModeLinearisedAnime(
                             torch.tensor(tempeigvec[User_TheModeToShow,cuthill_undoorder,:],
                                     dtype = torch.float64, device = torch.device('cpu')),
                             torch.tensor(X[cuthill_undoorder,:], device = torch.device('cpu'))*nmfactor,
@@ -454,7 +454,7 @@ for pdbfn in pdbavail:
 
         GPU = "%s %s" %(User_Platform, User_Device.replace(" GPU", ""))
 
-        performance = ["Inching (IRLMHD %s)" %(GPU), pdbfn, n_atoms, 
+        performance = ["Inching (IRLM %s)" %(GPU), pdbfn, n_atoms, 
                         runtime, peak_mem, 
                         User_Platform, User_Device, 
                         User_maxleafsize]

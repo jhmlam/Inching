@@ -4,8 +4,8 @@ import platform
 
 # A list of pdb available at different sizes
 
-Benchmarking_folder = "../BenchmarkLinuxArpack0064/"
-pdbavail = sorted(glob.glob('../DataRepo/CifByAtomCount/*.cif'))
+Benchmarking_folder = "../BenchmarkLinuxArpack0064_EPYC/"
+pdbavail = sorted(glob.glob('../DataRepo/PdbByAtomCount/*.pdb'))
 User_Platform = platform.system() # Windows Darwin Linux
 User_rc_Gamma = 8.0
 User_maxleafsize = 100
@@ -13,7 +13,7 @@ User_n_mode = 64
 User_tol = 1e-15
 
 User_PlusI = 1 # NOTE we do not heal the condition number to mimick a less careful implementation
-PDBCIF = "Cif"
+PDBCIF = "Pdb"
 
 
 PART00_Import = True
@@ -178,7 +178,6 @@ for pdbfn in pdbavail[:]:
 
 
     print(pdbfn)
-    st = time.time()
 
     X_df, X_top = InchingLite.util.BasicPdbCifLoading(pdbfn)
     protein_xyz = X_df[['x','y','z']].to_numpy().astype(np.float64)
@@ -199,8 +198,8 @@ for pdbfn in pdbavail[:]:
     # ===============================================
     # K-d Cuthill (NOTE CPU np array)
     # ===================================
-    st = time.time()
     # NOTE Cuthill Order and Undo
+    st = time.time()
     cuthill_order, cuthill_undoorder = InchingLite.Fuel.Coordinate.T1.X_KdCuthillMckeeOrder(protein_xyz,  
                                 rc_Gamma = User_rc_Gamma, Reverse = True,
                                 )

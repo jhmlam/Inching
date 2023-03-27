@@ -4,13 +4,13 @@ import platform
 
 # A list of pdb available at different sizes
 
-Benchmarking_folder = "../BenchmarkLinuxCupy0064/"
+Benchmarking_folder = "../BenchmarkLinuxInchingIRLM0064_A100/"
 pdbavail = sorted(glob.glob('../DataRepo/PdbByAtomCount/*.pdb'))
 User_Platform = platform.system() # Windows Darwin Linux
 
 User_rc_Gamma = 8.0
 User_maxleafsize = 100
-User_n_mode = 64 - 6
+User_n_mode = 64 
 User_tol = 1e-15
 User_PlusI = 1.0
 PDBCIF = "Pdb"
@@ -284,7 +284,7 @@ for pdbfn in pdbavail:
 
 
 
-    PART03b_MakeFreeModes = True
+    PART03b_MakeFreeModes = False
     if PART03b_MakeFreeModes:
 
         Q_HotellingDeflation = cp.zeros((6,3*n_atoms), dtype = cp.float64)
@@ -353,7 +353,7 @@ for pdbfn in pdbavail:
                     k = User_n_mode ,
                     User_HalfMemMode= True,
                     tol=User_EigTolerance ,maxiter=User_MaxIter,    #set the tolerence and maximum iteration as a stop criteria.
-                    User_Q_HotellingDeflation = Q_HotellingDeflation,
+                    User_Q_HotellingDeflation = None, #Q_HotellingDeflation,
                     User_HotellingShift = 10, # NOTE 10 is generally safe for first 64 modes, of course if you want to guarentee it you know a norm
                     )
         runtime = time.time() - st
@@ -454,7 +454,7 @@ for pdbfn in pdbavail:
 
         GPU = "%s %s" %(User_Platform, User_Device.replace(" GPU", ""))
 
-        performance = ["Inching (IRLMHD %s)" %(GPU), pdbfn, n_atoms, 
+        performance = ["Inching (IRLM %s)" %(GPU), pdbfn, n_atoms, 
                         runtime, peak_mem, 
                         User_Platform, User_Device, 
                         User_maxleafsize]

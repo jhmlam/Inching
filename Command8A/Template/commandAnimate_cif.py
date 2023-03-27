@@ -59,7 +59,7 @@ if PART00_Import:
 
 
    sys.path.append('..')
-   sys.path.append('../InchingExam/Burn/')
+   sys.path.append('../InchingLite/Burn/')
 
 
    import torch
@@ -69,18 +69,18 @@ if PART00_Import:
 
 
    sys.path.append('..')
-   sys.path.append('../InchingExam/Burn/')
-   import InchingExam.util
-   import InchingExam.Fuel.Coordinate.T1
-   import InchingExam.Fuel.Coordinate.T2
-   import InchingExam.Burn.Coordinate.T1
-   import InchingExam.Burn.Coordinate.T3
+   sys.path.append('../InchingLite/Burn/')
+   import InchingLite.util
+   import InchingLite.Fuel.Coordinate.T1
+   import InchingLite.Fuel.Coordinate.T2
+   import InchingLite.Burn.Coordinate.T1
+   import InchingLite.Burn.Coordinate.T3
 
-   from InchingExam.Fuel.T1 import X_SparseCupyMatrix, Xnumpy_SparseCupyMatrixUngappped
-   from InchingExam.Fuel.Coordinate.T1 import HeigvecOne_BoxCoxMagnitude
+   from InchingLite.Fuel.T1 import X_SparseCupyMatrix, Xnumpy_SparseCupyMatrixUngappped
+   from InchingLite.Fuel.Coordinate.T1 import HeigvecOne_BoxCoxMagnitude
 
-   import InchingExam.Burn.Visualisation.T1
-   import InchingExam.Burn.Visualisation.T2
+   import InchingLite.Burn.Visualisation.T1
+   import InchingLite.Burn.Visualisation.T2
 
    # ============================
    # Some torch speed up tips
@@ -105,7 +105,7 @@ if PART00_Import:
    torch.set_default_dtype(torch.float64)
    torch.set_default_tensor_type(torch.cuda.DoubleTensor)
    try:
-      InchingExam.util.TorchEmptyCache()
+      InchingLite.util.TorchEmptyCache()
    except RuntimeError:
       print("The GPU is free to use. THere is no existing occupant")
    try:
@@ -125,11 +125,11 @@ if PART01_ListOfPDB:
          pdbavail, sizedict = pickle.load(fn)
    else:
 
-      pdbavail = [InchingExam.util.WinFileDirLinux(i) for i in pdbavail]
+      pdbavail = [InchingLite.util.WinFileDirLinux(i) for i in pdbavail]
       size = []
       for pdbfn in tqdm.tqdm(pdbavail):
 
-         X_df, X_top = InchingExam.util.BasicPdbCifLoading(pdbfn)
+         X_df, X_top = InchingLite.util.BasicPdbCifLoading(pdbfn)
          protein_xyz = X_df[['x','y','z']].to_numpy().astype(np.float64)
          size.append(protein_xyz.shape[0])
          del X_df, protein_xyz
@@ -183,7 +183,7 @@ for pdbfn in pdbavail[:20]:
     print(pdbfn)
     st = time.time()
 
-    X_df, X_top = InchingExam.util.BasicPdbCifLoading(pdbfn)
+    X_df, X_top = InchingLite.util.BasicPdbCifLoading(pdbfn)
     protein_xyz = X_df[['x','y','z']].to_numpy().astype(np.float64)
     # NOTE PDB format digit decimal do no destroy collinearity!
     protein_xyz -= np.around(protein_xyz.mean(axis= 0), decimals=4)
@@ -234,7 +234,7 @@ for pdbfn in pdbavail[:20]:
             PART05a_Raw = False
             if PART05a_Raw:
                 if '3j3q' in pdbid:
-                    InchingExam.util.SaveOneModeLinearisedAnime(
+                    InchingLite.util.SaveOneModeLinearisedAnime(
                             eigvec[User_TheModeToShow,:,:],
                             protein_xyz*nmfactor,
                             n_timestep = 5,
@@ -249,7 +249,7 @@ for pdbfn in pdbavail[:20]:
                             RemoveOrig = True, # NOTE This flag remove the unmoved structure from the trajectory produce
                             )
                 else:
-                    InchingExam.util.SaveOneModeLinearisedAnime(
+                    InchingLite.util.SaveOneModeLinearisedAnime(
                             eigvec[User_TheModeToShow,:,:],
                             protein_xyz*nmfactor,
                             n_timestep = 16,
@@ -285,7 +285,7 @@ for pdbfn in pdbavail[:20]:
 
 
                 if '3j3q' in pdbid:
-                    InchingExam.util.SaveOneModeLinearisedAnime(
+                    InchingLite.util.SaveOneModeLinearisedAnime(
                             deltaX, 
                             protein_xyz*nmfactor,                
                             n_timestep = 5, 
@@ -303,7 +303,7 @@ for pdbfn in pdbavail[:20]:
                             )
                 else:
 
-                    InchingExam.util.SaveOneModeLinearisedAnime(
+                    InchingLite.util.SaveOneModeLinearisedAnime(
                             deltaX, 
                             protein_xyz*nmfactor, 
                             n_timestep = 16, 

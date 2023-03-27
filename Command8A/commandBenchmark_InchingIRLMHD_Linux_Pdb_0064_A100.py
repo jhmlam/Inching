@@ -4,7 +4,7 @@ import platform
 
 # A list of pdb available at different sizes
 
-Benchmarking_folder = "../BenchmarkLinuxCupy0064/"
+Benchmarking_folder = "../BenchmarkLinuxInchingIRLMHD0064_A100/"
 pdbavail = sorted(glob.glob('../DataRepo/PdbByAtomCount/*.pdb'))
 User_Platform = platform.system() # Windows Darwin Linux
 

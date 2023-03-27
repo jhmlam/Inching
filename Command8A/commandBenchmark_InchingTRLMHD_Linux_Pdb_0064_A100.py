@@ -4,7 +4,7 @@ import platform
 
 # A list of pdb available at different sizes
 
-Benchmarking_folder = "../BenchmarkLinuxCupy0064/"
+Benchmarking_folder = "../BenchmarkLinuxInchingTRLMHD0064_A100/"
 pdbavail = sorted(glob.glob('../DataRepo/PdbByAtomCount/*.pdb'))
 User_Platform = platform.system() # Windows Darwin Linux
 
@@ -16,7 +16,7 @@ User_PlusI = 1.0
 PDBCIF = "Pdb"
 User_MaxIter = 15000
 
-# IRLMHD Params
+# TRLMHD Params
 User_GapEstimate = 1e-6
 User_SolverName = 'gmres'
 User_SolverMaxIter = 20
@@ -176,7 +176,7 @@ for pdbfn in pdbavail:
     #        continue
     #else:
     #    pass
-    if os.path.exists("%s/PerformanceList_InchingIRLMHD_%s_%s_%s.pkl" %(Benchmarking_folder, pdbid, User_Platform, User_Device.replace(" ","") )):
+    if os.path.exists("%s/PerformanceList_InchingTRLMHD_%s_%s_%s.pkl" %(Benchmarking_folder, pdbid, User_Platform, User_Device.replace(" ","") )):
         #if '1a1x' not in pdbid:
             continue
     print(pdbfn)
@@ -212,7 +212,7 @@ for pdbfn in pdbavail:
 
     
     #print(A)
-    from InchingLite.Burn.ImplicitlyRestartedLanczosHotellingDeflation.T1 import S_HeigvalIRLMHD_HeigvecIRLMHD
+    from InchingLite.Burn.ThickRestartLanczosHotellingDeflation.T1 import S_HeigvalTRLMHD_HeigvecTRLMHD
     print('start eigsh cupy')
 
 
@@ -349,7 +349,7 @@ for pdbfn in pdbavail:
     
     PART04_CalcualteEig = True
     if PART04_CalcualteEig:
-        eigval, eigvec = S_HeigvalIRLMHD_HeigvecIRLMHD(A,
+        eigval, eigvec = S_HeigvalTRLMHD_HeigvecTRLMHD(A,
                     k = User_n_mode ,
                     User_HalfMemMode= True,
                     tol=User_EigTolerance ,maxiter=User_MaxIter,    #set the tolerence and maximum iteration as a stop criteria.
@@ -366,12 +366,12 @@ for pdbfn in pdbavail:
 
 
         peak_mem = cupy.get_default_memory_pool().used_bytes() / 1024 / 1024
-        with open("%s/Eigval_InchingIRLMHD_%s_%s_%s.pkl" %(
+        with open("%s/Eigval_InchingTRLMHD_%s_%s_%s.pkl" %(
                     Benchmarking_folder, pdbid, User_Platform, 
                     User_Device.replace(" ","")),"wb") as fn:
             pickle.dump(cupy.asnumpy(eigval) - User_PlusI ,fn, protocol=4)
         
-        with open("%s/Eigvec_InchingIRLMHD_%s_%s_%s.pkl" %(
+        with open("%s/Eigvec_InchingTRLMHD_%s_%s_%s.pkl" %(
                     Benchmarking_folder, pdbid, User_Platform, 
                     User_Device.replace(" ","")),"wb") as fn:    
             tempeigvec = cupy.asnumpy(eigvec)
@@ -454,7 +454,7 @@ for pdbfn in pdbavail:
 
         GPU = "%s %s" %(User_Platform, User_Device.replace(" GPU", ""))
 
-        performance = ["Inching (IRLMHD %s)" %(GPU), pdbfn, n_atoms, 
+        performance = ["Inching (TRLMHD %s)" %(GPU), pdbfn, n_atoms, 
                         runtime, peak_mem, 
                         User_Platform, User_Device, 
                         User_maxleafsize]
@@ -465,7 +465,7 @@ for pdbfn in pdbavail:
         for i in range(len(delta_lambda_list)):
             longperformance.append(performance + [i ,delta_lambda_list[i], eigval[i] - User_PlusI])
         
-        with open("%s/PerformanceList_InchingIRLMHD_%s_%s_%s.pkl" %(Benchmarking_folder, 
+        with open("%s/PerformanceList_InchingTRLMHD_%s_%s_%s.pkl" %(Benchmarking_folder, 
             pdbid, User_Platform, User_Device.replace(" ","")),"wb") as fn:   
             pickle.dump(longperformance,fn, protocol=4)
 

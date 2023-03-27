@@ -4,7 +4,7 @@ import platform
 
 # A list of pdb available at different sizes
 
-Benchmarking_folder = "../BenchmarkLinuxArpack0064/"
+Benchmarking_folder = "../BenchmarkLinuxArpack0064_EPYC/"
 pdbavail = sorted(glob.glob('../DataRepo/CifByAtomCount/*.cif'))
 User_Platform = platform.system() # Windows Darwin Linux
 User_rc_Gamma = 8.0
