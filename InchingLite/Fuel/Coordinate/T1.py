@@ -22,7 +22,7 @@ from torch import jit
 sys.path.append('..')
 sys.path.append('../Script/Burn/')
 
-import InchingLite.Fuel.Coordinate.T2
+#import InchingLite.Fuel.Coordinate.T2
 
 
 

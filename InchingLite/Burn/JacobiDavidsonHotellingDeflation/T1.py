@@ -561,7 +561,7 @@ def S_HeigvalJDMHD_HeigvecJDMHD(A,
 
 
 
-        # NOTE Thick restart
+        # NOTE restart
         if S.shape[0] == jmax:
             
             #print("Maximum workspace reached")
@@ -607,13 +607,19 @@ def S_HeigvalJDMHD_HeigvecJDMHD(A,
         F_ = None
         del F_
 
-
+        """
         # NOTE FRO on Q_ and then V
-        z = InchingLite.Burn.Orthogonalization.T2.T2_vnext_V_MGSvnext(z, Q_)
+        z = InchingLite.Burn.Orthogonalization.T2.T2_vnext_V_MGSvnext(z, Q_) # NOTE Unstable for large structure. 
         z = z[:,cp.newaxis]
         
         #z = OOC2_qnext_Q_MGSqnext(z,Q_)
         z = OOC2_qnext_Q_ICGSqnext(z,V) 
+        """
+
+        # NOTE FRO on z
+        z = z[:,cp.newaxis]
+        z = OOC2_qnext_Q_MGSqnext(z,Q_)
+        z = OOC2_qnext_Q_ICGSqnext(z,V)
 
 
         KrylovAv(A,cupy.ravel(z),cupy.ravel(Av))
