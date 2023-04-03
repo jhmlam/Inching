@@ -1,0 +1,456 @@
+\documentclass[a4paper]{article}
+
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ top=20mm,
+ }
+
+
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+
+\title{A GPU-optimized approach to vibrational dynamics of megascale macromolecules \protect\\ Algorithms \protect\\}
+
+
+
+\author{Jordy Homing Lam}
+
+\date{April 3, 2023}
+
+\begin{document}
+\maketitle
+
+This document contains the pseudocode for the following algorithms:
+\begin{itemize}
+\item [Algorithm 1] 3-D Reverse Cuthill McKee (3DRCM)
+\item [Algorithm 2] Modified Gram-Schmidt Vector (MGSV)
+\item [Algorithm 3] p-step Lanczos Factorization (PLF)
+\item [Algorithm 4] Implicitly Restarted Lanczos Method (IRLM)
+\item [Algorithm 5] Thick Restart Lanczos Method (TRLM)
+\item [Algorithm 6] Jacobi-Davidson Method (JDM)
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+\pagebreak
+
+
+
+
+
+
+
+\section{3-D Reverse Cuthill McKee}
+
+A Reverse Cuthill McKee algorithm supplemented with a k-D tree data structure where k=3. The data structure $KdTree$ is provided in the SciPy (v1.8.0) package. Analysis and pseudocode of a k-D tree can be found in the work of `Bentley, J. L. Multidimensional binary search trees used for associative searching. Commun. ACM 18, 509–517 (1975)`. An empty 1-d array of length $l$ is notated as $0^l$. Time complexity marked in comment.
+
+\begin{algorithm}
+\caption{3-D Reverse Cuthill McKee}\label{alg:3DRCM}
+\begin{algorithmic}[1]
+\Procedure{3DRCM}{$X \in \mathbb{R}^{N \times 3}$,  $R_C \in \mathbb{R}^{1} $}
+\\\Comment{ (a) Prepare a 3-D tree $O(N log N)$}
+\State $3dTree \gets KdTree(X)$ 
+
+
+\\\Comment{(b) Find peripheral node $O(N \times 3N^{2/3})$}
+\State Initialize $D = \mathbb{0}^{N}$\Comment{Degrees.}
+\For {$i = 0,...,N-1$}
+    \State $D[i] \gets |\mathcal{N}(X_i)|$ on $3dTree$
+\EndFor
+  
+\State $Inds = Argsort(D)$ ; $IndsRev = Argsort(Inds)$ \Comment{Quicksort.}
+\State $m = max(Deg)$
+
+
+\\\Comment{(c) Breadth-first loop $O(3N^{5/3} + 2cm^{2}N)$}
+\State Initialize $L = \mathbb{0}^{N}$ ; $\tilde{D} = \mathbb{0}^{m}; n = 0$
+
+\For {$z=0,...,N-1$}
+    \If{$Inds[z] \mathrel{=}= -1$}
+    \State continue
+    \EndIf
+
+    \State $L[n] \gets Inds[z]$; $n \mathrel{+}= 1$ 
+
+    \State $Inds[IndsRev[Inds[z]]] \gets -1$ \Comment{Indicate visited.}
+    \State $Level_{s} = n - 1 ; Level_{t} = n$ 
+    
+    \While{ $Level_{s} < Level_{t}$}
+        \For{$\tilde{i} = Level_{s},..., Level_{t}-1 $}
+            \State $i \gets L[\tilde{i}]$ ; $n_{old} = n$
+ 
+            \State $\mathcal{N}(X_i) \gets 3dTree(R_C, X_i)$ \Comment{ Neighbors in $R_C$.}
+
+            \For{$j = 0,...,|\mathcal{N}(X_i)| -1$}
+                \State $\tilde{j} = \mathcal{N}(X_i)[j]$
+                \If{$Inds[IndsRev[\tilde{j}]] \mathrel{=}= -1$}
+                    \State continue
+                \EndIf
+                \State $Inds[IndsRev[\tilde{j}]] \gets -1 $ 
+                \State $L[n] \gets j$ ; $n \mathrel{+}= 1$
+            
+            \EndFor
+            
+            \State $l_s = 0$
+            \For{$k = n_{old},...,n-1$}\Comment{Insertion Sort.}
+                \State $\tilde{D}[l_s] \gets D[L[k]]$ ; $l_s \mathrel{+}= 1$
+            \EndFor
+
+            \For{$k = 1, ...,l_{s} -1$}
+                \State $\tilde{d} \gets \tilde{D}[k]$
+                \State $\tilde{l} \gets L[n_{old} + k]$
+                \State $l_t \gets k$
+                \While{ $l_t > 0$ and $\tilde{d} < \tilde{D}[l_t - 1] $}
+                    \State $\tilde{D}[l_t] \gets \tilde{D}[l_t - 1]$
+                    \State $L[n_{old} +l_t] \gets L[n_{old} + l_t -1]$; $l_t \mathrel{-}= 1$
+                \EndWhile
+                \State $\tilde{D}[l_t] \gets \tilde{d}$
+                \State $L[n_{old} + l_t] \gets \tilde{l} $
+            \EndFor
+        \EndFor
+    \State $Level_s \gets Level_t$ ; $Level_t \gets n$
+        
+    \EndWhile
+    
+\EndFor
+
+
+
+\\ (d) Reverse
+\State \textbf{return} $L[::-1]$
+
+
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\pagebreak
+
+\section{Modified Gram-Schmidt Vector}
+A Modified Gram-Schmidt (MGS) algorithm to orthogonalize a vector $u$ against the vectors in the basis $V$. 
+
+
+
+
+\begin{algorithm}
+\caption{Modified Gram-Schmidt Vector}\label{alg:MGSV}
+\begin{algorithmic}[1]
+\Procedure{MGSV}{$u \in \mathbb{R}^{n} ; V \in \mathbb{R}^{m \times n} $}
+
+\For{$i = 0, ..., m-1$}
+    \State $ u = u - (u^\top v_i) v_i$
+\EndFor
+\State \textbf{return} $ u $
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\section{p-step Lanczos Factorization}
+A p-step Lanczos Factorization (PLF) to produce $p$ basis between index $j_s$ and $j_t$. 
+
+\begin{algorithm}
+\caption{p-step Lanczos Factorization}\label{alg:PLF}
+\begin{algorithmic}[1]
+\Procedure{PLF}{$A$ $\in \mathbb{R}^{n \times n} , V \in \mathbb{R}^{(m+1)\times n},  \alpha \in \mathbb{R}^{m},  \beta \in \mathbb{R}^{m}, j_s = 0, j_t = m $ }
+
+
+\For{$j = j_s, ..., j_t - 1$}
+    \State $r = Av_j$
+    \State $\alpha_j \gets v_j^\top r  $
+    \State $r \gets r - \alpha_j v_j $
+    \State $r \gets MGSV(r,V[:j])$ \Comment{Full Reorthogonalization (FRO).}
+    \State $r \gets MGSV(r,V[:j])$
+    \State $\beta_j \gets ||r||_2  $
+    \State $v_{j+1} = r / \beta_j$
+\EndFor
+
+
+\State \textbf{return} $V, \alpha, \beta$
+
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\pagebreak
+
+
+
+
+
+\section{Implicitly Restarted Lanczos Method}
+An Implicitly Restarted Lanczos Method (IRLM) to compute $k$ smallest eigenpairs. This algorithm calls Algorithm 2 MGSV and Algorithm 3 PLF. The projected eigenproblem is solved on CPU by calling ‘numpy.linalg.eigh’ from the NumPy (v. 1.23.5) package. At max, 15000 restarts were allowed.
+
+
+\begin{algorithm}
+\caption{Implicitly Restarted Lanczos Method}\label{alg:IRLM}
+\begin{algorithmic}[1]
+\Procedure{IRLM}{$A$ $\in \mathbb{R}^{n \times n} , V \in \mathbb{R}^{(m+1)\times n},  \alpha \in \mathbb{R}^{m},  \beta \in \mathbb{R}^{m} , \epsilon=1e-8$ }
+
+
+
+\State Initialize $v_0 \gets v_{rand}/||v_{rand}||_2 $
+\State $j_s = 0$
+\For{$i_{iter} = 1,...,15000$}
+        \\\Comment{(a) Initial p-steps Lanczos Factorization}
+
+        \State PLF(A,V,$\alpha$,$\beta$, $j_s = j_s$, $j_t = m$) 
+
+
+
+        \\\Comment{(b) Implicit Shift}
+        \State $ S,W = eig(\alpha, \beta[:m-1])$
+        \State $ \theta = Sort(Diag(S))[::-1][:(m-k)]$ 
+        \State $\tilde{\beta} = \beta_{k+p-1}$
+        \State $Q = I$
+        \For{$i = 0...p-1$}
+            \State $T = Tridiag(\alpha, \beta[:m-1]) $
+            \State $\tilde{Q} \tilde{R} = T -  \theta_i I$
+            \State $T \gets \tilde{Q}^\top T \tilde{Q}$
+            \State $ \alpha, \beta \gets T$ 
+            \State $ Q \gets Q\tilde{Q}$
+        \EndFor
+        \State $\beta \gets [\beta , \tilde{\beta}]$ 
+        \\\Comment{(c) Implicit Restart}
+        \State $\sigma = Q[k-1,m-1]$
+        \State $V[:k] \gets Q[:k,:] V[:m,:]$
+        \State $v_k \gets \beta_{k-1}  Q[k,:] V[:m,:] + \sigma \beta_{m-1}  v_{m}$
+        \State $\beta_{k-1} \gets ||v_k||_2 $
+        \State $v_k \gets v_k / \beta_{k-1}$
+
+        \State $v_{k} \gets MGSV(v_{k}, V[:k])$
+        \State $v_{k} \gets MGSV(v_{k}, V[:k])$
+        \State $v_{k} \gets v_{k} / ||v_{k}||_2$
+       
+        \State $j_s \gets k $ \Comment{Reset the PLF}
+        \\\Comment {(d) Estimate Convergence}
+        \If {$\beta_{k-1} < \epsilon$}
+            \State Break
+        \EndIf
+            
+\EndFor
+
+\State $S,W = eig(Tridiag(\alpha[:k], \beta[:k-1]))$
+
+
+\State \textbf{return} $S[:k], W^\top V[:k,:]$
+
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\pagebreak
+
+\section{Thick Restart Lanczos Method}
+A Thick Restart Lanczos Method to compute the $k$ smallest eigenpairs. This algorithm calls Algorithm 2 MGSV and Algorithm 3 PLF. The projected eigenproblem is solved on CPU by calling ‘numpy.linalg.eigh’ from the NumPy (v. 1.23.5) package. At max, 15000 restarts were allowed.
+
+
+\begin{algorithm}
+\caption{Thick Restart Lanczos Method}\label{alg:TRLM}
+\begin{algorithmic}[1]
+\Procedure{TRLM}{$A$ $\in \mathbb{R}^{n \times n} , V \in \mathbb{R}^{(m+1)\times n},  \alpha \in \mathbb{R}^{m},  \beta \in \mathbb{R}^{m} , \epsilon=1e-12$ }
+\State Initialize $v_0 \gets v_{rand}/||v_{rand}||_2 $
+\State $j_s = 0; b = 0; S = 0; r = v_0$
+\For{$i_{iter} = 1,...,15000$}
+
+        \\\Comment{(a) Reinitialize}
+        \State $\beta[:k] \gets 0$
+        \State $\alpha[:k] \gets Diag(S)$
+        \State $r \gets MGSV(r,V[:k])$
+        \State $r \gets r / ||r||_2$
+        \State $v_k \gets r$
+
+        \\\Comment{(b) p-step Lanczos Factorization}
+        
+        \State PLF(A,V,$\alpha$,$\beta$, $j_s = j_s$, $j_t = m$) 
+        \\\Comment{(c) Thick Restart}
+        \State $T = Tridiag(\alpha,\beta[:m-1]); T[k,:k] \gets b; T[:k,k] \gets b$
+        \State $S,W = eig(T)$
+        \State $W \gets W[:m,Argort(Diag(S))[:k]]$
+        \State $S \gets Diag(S)[Argort(Diag(S))[:k]]$
+        \State $V[:k,:] \gets W^\top V$
+        \State $b = \beta_{m-1} W[m-1, :k]$ 
+        
+        \State $j_s \gets k$ \Comment{Reset the PLF}
+        \\\Comment{(d) Check Convergence}
+        \If{$||b||_2 < \epsilon$}
+            \State Break
+        \EndIf
+        
+        
+\EndFor
+
+
+
+\State \textbf{return} $S, V$
+
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\pagebreak
+\section{Jacobi-Davidson Method}
+
+A Jacobi-Davidson Method to compute $k$ smallest eigenpairs. This algorithm calls Algorithm 2 MGSV. The projected eigenproblem is solved on CPU by calling ‘numpy.linalg.eigh’ from the NumPy (v. 1.23.5) package. The correction $z$ is approximated with Generalized Minimal Residual Iteration (GMRES) routine provided in CuPy; unless otherwise stated, the iteration is stopped if residual in GMRES reach 1e-6 or the number of iterations exceeds 20. $j_s$ counts towards the desired number of converged Ritz pair $k$. Some preconditioners (e.g. ILU(k)) were considered in solving the correction equation, but their sizes becomes prohibitive as $n$ increases; trivial preconditioner e.g. $diag(A)^{-1}$ does not improve performance.
+
+\begin{algorithm}
+\caption{Jacobi-Davidson Method}\label{alg:JDM}
+\begin{algorithmic}[1]
+\Procedure{JDM}{$A$ $\in \mathbb{R}^{n \times n} , \epsilon=1e-12, \tau= 1.0 , k=64$ }
+
+\State Initialize $v_0 = v_{rand} / ||v_{rand}||_2$ 
+\State $G = v_0^\top A v_0$ 
+\State $V = [v_0,]$ 
+\State $Q = [0^\top,]; F = [0] ; \Lambda = [] $
+
+\State $j_s = 0$ 
+\\
+
+\For{$i_{iter} = 1,...,15000$}
+
+    \State $ S,W = eig(G)$
+    \While{True}
+        \\\Comment{(a) Get Residual}
+        \State $u = VW[:,0]$; $\theta = S[0,0]$
+        \State $r = Au - \theta u$
+        \State $\sigma = \theta - \tau_{gap}$\Comment{Propose shift.}
+        \State $\tilde{F} = [F, Q^\top u ; u^\top Q , u^\top u]$
+        \State $\tilde{Q} = [Q,u]$
+    \\
+        \If{$(||r||_2 > \epsilon) \cup ( (dim(S)[0] <= 1) \cap (j_s \mathrel{!}= k - 1))$]} \Comment{Non-convergence.}
+            \State Break.
+        \EndIf
+        \\\Comment{(b) Update Projections}
+        \State $\Lambda \gets [\Lambda, \theta]$
+        \State $Q \gets \tilde{Q}; F \gets \tilde{F}$
+        \State $V \gets V W[:,1:j]; S \gets S[1:j,1:j]$
+        \State $G \gets S ; W \gets I$
+        \State $j_s \mathrel{+} = 1$
+
+        \If{$j_s == k$}
+            \State Return $\Lambda, Q$ \Comment{All converged.}
+        \EndIf
+
+    \EndWhile
+    \\ 
+    \If{$dim(S)[0] == 2k$}\Comment{(c) Restart if workspace is full}
+        \State $V \gets VW[:, 0:k] ; S \gets S[0:k,0:k] $
+        \State $G \gets S; W \gets I $
+    \EndIf
+
+    \If{$||r||_2 < \epsilon$}\Comment{Override shift.}
+        \State $\sigma = \theta$
+    \EndIf
+    \\\Comment{(d) Correction equation with GMRES.}
+    \State $(I-\tilde{Q}\tilde{Q}^\top) (A - \sigma I ) (I - \tilde{Q}\tilde{Q}^\top) z = -(I - \tilde{Q} \tilde{F}^{-1} \tilde{Q}^\top)r$ 
+    \State $z \gets MGSV(\tilde{Q}, z)$ 
+    \State $z \gets MGSV(V, z)$ ; $z \gets MGSV(V, z)$
+    \State $z \gets z / ||z||_2$
+    \\\Comment{(e) Update Projections}
+    \State $\tilde{z} = Az$
+    \State $V \gets [V,z]$ 
+    \State $G \gets [G, V^\top \tilde{z} ; \tilde{z}^\top V, z^\top \tilde{z}]$ 
+    \State $i_{iter} \mathrel{+}= 1 $
+\EndFor
+
+\\\Comment{(f) Guard not all converged.}
+\State \textbf{return} $\Lambda, Q$ 
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+\end{document}
