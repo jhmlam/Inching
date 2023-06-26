@@ -1,29 +1,0 @@
-Warning: importing 'simtk.openmm' is deprecated.  Import 'openmm' instead.
-OMP: Info #277: omp_set_nested routine deprecated, please use omp_set_max_active_levels instead.
-The GPU is free to use. THere is no existing occupant
-The GPU is free to use. THere is no existing occupant
-85
-../DataRepo/PdbByAtomCount/1a1x.pdb
-1a1x 905
-  0%|          | 0/1 [00:00<?, ?it/s]100%|██████████| 1/1 [00:00<00:00, 199.99it/s]
-N_neighbor within 8.0 angstrom Mean 76.2950276243094, Std 26.436920182883313
-  0%|          | 0/905 [00:00<?, ?it/s]  0%|          | 0/905 [00:00<?, ?it/s]
-start eigsh cupy
-  0%|          | 0/16 [00:00<?, ?it/s]100%|██████████| 16/16 [00:00<00:00, 789516.05it/s]
-  0%|          | 0/16 [00:00<?, ?it/s]100%|██████████| 16/16 [00:00<00:00, 1440.94it/s]
-/home1/homingla/.conda/envs/Inching23/lib/python3.8/site-packages/numpy/core/fromnumeric.py:3432: RuntimeWarning: Mean of empty slice.
-  return _methods._mean(a, axis=axis, dtype=dtype,
-/home1/homingla/.conda/envs/Inching23/lib/python3.8/site-packages/numpy/core/_methods.py:190: RuntimeWarning: invalid value encountered in double_scalars
-  ret = ret.dtype.type(ret / rcount)
-Mean number of Gaps > 100 is 0.0. Mean Gap Length Given Gap is nan
-Ungapping yield no improvement in this case.
-Nnz in Hessian (L+D) is 314784.0. This will occupy 0.002314981073141098 GB for (L+D) data and at max 0.002314981073141098 GB for all indexings. Acceptable?
-  0%|          | 0/16 [00:00<?, ?it/s]  6%|▋         | 1/16 [00:01<00:29,  1.93s/it] 88%|████████▊ | 14/16 [00:02<00:00,  9.41it/s]100%|██████████| 16/16 [00:02<00:00,  7.80it/s]
-(311974,)
-There are 128 Ritz vectors, tol = 1e-12
-Traceback (most recent call last):
-  File "commandBenchmark_InchingTRLM_Linux_Pdb_0064_A100.py", line 352, in <module>
-    eigval, eigvec = S_HeigvalTRLMHD_HeigvecTRLMHD(A,
-  File "/project/qcb_640/homingla/Project-Inching/Command8A/../InchingLite/Burn/ThickRestartLanczosHotellingDeflation/T1.py", line 104, in S_HeigvalTRLMHD_HeigvecTRLMHD
-    KrylovAv = InchingLite.Burn.Krylov.T3.OOC2_HalfMemS_v_KrylovAv_VOID(a)
-AttributeError: module 'InchingLite.Burn' has no attribute 'Krylov'
