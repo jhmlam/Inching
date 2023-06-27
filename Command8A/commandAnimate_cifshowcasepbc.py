@@ -31,8 +31,8 @@ import platform
 
 # A list of pdb available at different sizes
 
-Benchmarking_folder = "../OBSOLETE_Benchmark/BenchmarkLinuxCupy0064_A100/"
-pdbavail = sorted(glob.glob('../DataRepo/CifByAtomCount/*.cif'))
+Benchmarking_folder = "../ShowcaseLinuxInchingJDM0064_A100_NpcPbc/"
+pdbavail = sorted(glob.glob('../DataRepo/CifShowcaseNpcPbc/*.cif'))
 User_Platform = platform.system() # Windows Darwin Linux
 
 
@@ -41,7 +41,7 @@ User_rc_Gamma = 8.0
 User_maxleafsize = 100
 User_n_mode = 64
 User_tol = 1e-15
-
+User_Eigsolver="JDM"
 PDBCIF = "Cif"
 
 
@@ -51,7 +51,6 @@ if PART00_Import:
    import gc
    import sys
    import pickle
-   import prody
    import numpy as np
    import time
    import tqdm
@@ -181,8 +180,8 @@ if PART01_ListOfPDB:
 
 benchmark_inching = []
 print(len(pdbavail))
-pdbavail = ["../DataRepo/PdbByAtomCount/1a1x.pdb"] + pdbavail[::-1]
-for pdbfn in pdbavail[:20]:
+pdbavail = pdbavail[:]
+for pdbfn in pdbavail[:]:
     
 
     #if '7bii' not in pdbfn:
@@ -236,13 +235,13 @@ for pdbfn in pdbavail[:20]:
     PART04_GetEigvecEigvalSaved = True
     if PART04_GetEigvecEigvalSaved:
         
-        with open("%s/Eigval_Inching_%s_%s_%s.pkl" %(
-                    Benchmarking_folder, pdbid, User_Platform,
+        with open("%s/Eigval_Inching%s_%s_%s_%s.pkl" %(
+                    Benchmarking_folder, User_Eigsolver, pdbid, User_Platform,
                     User_Device.replace(" ","")),"rb") as fn:
             eigval = pickle.load(fn)
 
-        with open("%s/Eigvec_Inching_%s_%s_%s.pkl" %(
-                    Benchmarking_folder, pdbid, User_Platform,
+        with open("%s/Eigvec_Inching%s_%s_%s_%s.pkl" %(
+                    Benchmarking_folder, User_Eigsolver, pdbid, User_Platform,
                     User_Device.replace(" ","")),"rb") as fn:
             eigvec = pickle.load(fn)
             
