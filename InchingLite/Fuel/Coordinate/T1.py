@@ -1,3 +1,34 @@
+# =======================================================================================
+#   Copyright 2020-present Jordy Homing Lam, JHML, University of Southern California
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#
+#    Redistribution and use in source and binary forms, with or without
+#    modification, are permitted provided that the following conditions are
+#    met:
+#
+#    *  Redistributions of source code must retain the above copyright notice, 
+#       this list of conditions and the following disclaimer.
+#    *  Redistributions in binary form must reproduce the above copyright notice, 
+#       this list of conditions and the following disclaimer in the documentation and/or 
+#       other materials provided with the distribution.
+#    *  Cite our work at Lam, J.H., Nakano, A., Katritch, V. REPLACE_WITH_INCHING_TITLE
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+# =========================================================================================
+
+
+
+
 from collections import defaultdict
 import tqdm
 import sys
@@ -15,7 +46,6 @@ import numpy as np
 #import numba as nb
 import scipy
 from scipy.spatial import cKDTree
-import scipy.stats
 import torch
 from torch import jit
 
@@ -29,6 +59,90 @@ sys.path.append('../Script/Burn/')
 
 import InchingLite.util
 
+
+# ============================
+# GNM
+# ============================
+# NOTE For reference only
+def Xnumpy_ScipyTurboGnmEigval_ScipyTurboGnmEigvec(protein_xyz, 
+                            User_rc_Gamma = 5.5, # NOTE in angstrom
+                            User_n_mode = 10, 
+                            User_ScipyArpackTol= 1e-12,
+                            device = torch.device(0),
+                            dtype_temp = torch.double):
+
+    # NOTE This can be used as a subroutine to obtain GNM eigenvector and 
+    #      subsequently the 3D heat kernel signature, which is a useful 
+    #      estimate of NMA/ANM magnitude.
+    # TODO Find a rc_Gamma that best fit ANM magnitude 
+
+
+    """
+    # How to use it?
+    # NOTE With a tolerance at 1e-16
+    #      1000k atoms takes 3000 seconds (50 min) and 5 GB RAM on laptop.
+    #      2000k atoms takes 9000 seconds (150 min) and 10GB RAM on laptop.
+    #      Highly doable, seemingly we can use this strategy to train things 
+
+    # NOTE Lowering tolerance may result in wrong arpack eigenvalue e.g. having strong negatives for a laplacian...
+    #      Also note that the lowest eigenvalue of a laplacian must be 0 because of its structure.
+    Gnmval, Gnmvec = Xnumpy_ScipyTurboGnmEigval_ScipyTurboGnmEigvec(protein_xyz,
+                            User_rc_Gamma = 8,
+                            User_n_mode = 100, 
+                            User_ScipyArpackTol= 0)
+    """
+
+    from scipy.spatial import cKDTree
+    from scipy import sparse
+
+    User_rc_Gamma /= 10
+    if torch.is_tensor(protein_xyz):
+        protein_xyz = protein_xyz.detach().cpu().numpy()
+
+    
+    protein_xyz -= np.mean(protein_xyz, axis = 0)
+    n_atoms = protein_xyz.shape[0]
+    protein_tree = cKDTree(protein_xyz, leafsize=16, compact_nodes=True, copy_data=False, balanced_tree=True, boxsize=None)
+    result_indexes = protein_tree.query_ball_tree(protein_tree, User_rc_Gamma, p=2., eps=0)
+
+    _Edges = []
+    for i in range(len(result_indexes)):
+        for j in result_indexes[i]:
+            if i >= j:
+                continue
+            _Edges.append([i,j])
+
+    _Edges = np.array( _Edges, dtype = np.int32 )
+    print("Average edge number", _Edges.shape[0]*2 / protein_xyz.shape[0])
+    
+    st = time.time()
+    # NOTE Make laplacian sparse
+    L = sparse.coo_matrix((
+                np.ones(_Edges.shape[0]),           # NOTE values == 1
+                (_Edges.T[0], _Edges.T[1])), 
+        shape=(protein_xyz.shape[0], protein_xyz.shape[0])).tocsr()
+    L += L.T
+
+    # NOTE Diagonal
+    L = sparse.dia_matrix((L.sum(1).flatten() +1,  # NOTE A + I trick
+                            0), L.shape) - L
+    #print(time.time() - st)
+    #print(L[:10,:10])
+    st = time.time()
+    # NOTE Find n_modes
+    laplacian_eigval, laplacian_eigvec = sparse.linalg.eigsh(L,
+                                                k=User_n_mode, 
+                                                M=None, 
+                                                sigma=None,             # NOTE search around Close to 1
+                                                which='SM',             # NOTE smallest only
+                                                v0=None, ncv=None, maxiter=None, tol=User_ScipyArpackTol, 
+                                                return_eigenvectors=True, 
+                                                Minv=None, OPinv=None, mode='normal')
+
+    laplacian_eigval -= 1 # NOTE A + I trick
+    print("Time to find Gnm amounts to %s seconds"%(time.time() - st))
+
+    return laplacian_eigval, laplacian_eigvec #torch.tensor(laplacian_eigval, device = device, dtype= dtype_temp) , torch.tensor(laplacian_eigvec, device = device, dtype= dtype_temp)
 
 
 
@@ -545,3 +659,97 @@ def HeigvecOne_BoxCoxMagnitude( deltaX,
 
     return deltaX_magnitude
 
+
+def HeigvecOne_RecipLogHeigvec( deltaX,
+                        User_WinsorizingWindow = (0.025, 0.975),
+                        
+    ):
+
+
+    if torch.is_tensor(deltaX):
+        deltaX = deltaX.detach().cpu().numpy()
+    else:
+        pass
+    deltaX_magnitude =  np.sqrt(
+                    np.sum( deltaX*  deltaX, axis =1)
+                    ).flatten()
+
+    deltaX_magnitude = -1.0/( np.log10(deltaX_magnitude))
+    lower_quan = np.quantile(deltaX_magnitude, User_WinsorizingWindow[0])
+    upper_quan = np.quantile(deltaX_magnitude, User_WinsorizingWindow[1])
+    deltaX_magnitude = np.clip(deltaX_magnitude, lower_quan, upper_quan)
+    deltaX_magnitude = (deltaX_magnitude - (np.min(deltaX_magnitude)) )/ (np.max(deltaX_magnitude) - np.min(deltaX_magnitude))
+
+
+    return  deltaX_magnitude
+
+
+
+
+# =================================
+# OBSOLETE
+# =================================
+
+# NOTE Obsolete GNM. The two routines below are underperformant. It can be more tightly integrated with the use of kdtree above
+def Xnumpy_Dnumpy(X):
+    n_atoms = X.shape[0]
+    
+    # Gram
+    G = np.matmul(X, X.T)
+
+    # Distance
+    g_1 = np.matmul(np.diag(G, diagonal=0).unsqueeze(0).T, np.ones(1, n_atoms))
+    R = g_1 + g_1.T - 2*G
+
+    # NOTE This is nm squared. Below I convert it to the euclidean form in nm
+    R = np.sqrt(R)#*10
+
+    return R
+
+# NOTE This is the BIG case Gamma in 2007 Bahar i.e. Laplacian a.k.a. Kirchoff in GNM
+def Dnumpy_K(R, rc_Gamma = 1.0, User_sparse_form = True):
+    """kirchoff matrix is the connectivity matrix
+       diagonal gives 
+       offdiag gives adjacency matrix  
+       R is the EDM m*m matrix
+    """
+    # The given matrix should be a EDM
+    K = np.zeros((R.shape[0],R.shape[1]))#
+    #K[R > rc_Gamma] = 0.0
+    K[R <= rc_Gamma] = -1.0
+    #K = K.fill_diagonal_(0.0)
+    #K_offdiagsum = torch.sum(K,1) # NOTE the diagonal is positive
+    K -= np.diag(np.sum(K,axis=1), diagonal=0)
+    K = K.astype(np.int64)
+    if User_sparse_form:
+        K = scipy.sparse.csr_matrix(K)
+
+    return K
+
+# =======================================================================================
+#   Copyright 2020-present Jordy Homing Lam, JHML, University of Southern California
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#
+#    Redistribution and use in source and binary forms, with or without
+#    modification, are permitted provided that the following conditions are
+#    met:
+#
+#    *  Redistributions of source code must retain the above copyright notice, 
+#       this list of conditions and the following disclaimer.
+#    *  Redistributions in binary form must reproduce the above copyright notice, 
+#       this list of conditions and the following disclaimer in the documentation and/or 
+#       other materials provided with the distribution.
+#    *  Cite our work at Lam, J.H., Nakano, A., Katritch, V. REPLACE_WITH_INCHING_TITLE
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+# =========================================================================================
