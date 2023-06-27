@@ -1,3 +1,33 @@
+# =======================================================================================
+#   Copyright 2020-present Jordy Homing Lam, JHML, University of Southern California
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#
+#    Redistribution and use in source and binary forms, with or without
+#    modification, are permitted provided that the following conditions are
+#    met:
+#
+#    *  Redistributions of source code must retain the above copyright notice, 
+#       this list of conditions and the following disclaimer.
+#    *  Redistributions in binary form must reproduce the above copyright notice, 
+#       this list of conditions and the following disclaimer in the documentation and/or 
+#       other materials provided with the distribution.
+#    *  Cite our work at Lam, J.H., Nakano, A., Katritch, V. REPLACE_WITH_INCHING_TITLE
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+# =========================================================================================
+
+
+
 import subprocess
 import os
 import sys
@@ -446,7 +476,7 @@ def SaveOneModeLinearisedAnime(deltaX, X,
     # =============
     # save
     # ===============
-    traj = np.array(traj)
+    traj = np.array(traj, dtype=np.float64) # NOTE float64 is must
 
     if SaveSeparate:
         for t in range(traj.shape[0]):
@@ -467,104 +497,6 @@ def SaveOneModeLinearisedAnime(deltaX, X,
     return
 
 
-
-
-
-
-
-# ======================
-# Hydrogen Mapper
-# =======================
-# NOTE Misc. Updating the heavy atom coordinate of a protonated structure by referencing an unprotonated structure
-def HydrogenMapper(     DIR_UnprotonatedPdb =   "", 
-                        DIR_ProtonatedPdb   =   "", 
-                        DIR_SavePdbFile = "", # NOTE Save a protonated file
-                        HeavyIndexMapper_NoH2H = {0:0},
-                        ):
-
-    # ==================
-    # Read unprotonated
-    # ===================
-    file_format_unprotonated = DIR_UnprotonatedPdb.split(".")[-1]
-    if file_format_unprotonated =='pdb':
-        with open(DIR_UnprotonatedPdb, 'r') as tempfile:
-            pdb_unprotonated = mmapp.pdbfile.PDBFile(tempfile)
-            fileunit = 1                            # NOTE nm is the native uit in pdb
-    if file_format_unprotonated =='cif':
-        with open(DIR_UnprotonatedPdb, 'r') as tempfile:
-            pdb_unprotonated = mmapp.pdbxfile.PDBxFile(tempfile)
-            fileunit = 1.0                            # NOTE angstrom is the native uit in pdbx
-
-    pdb_position_unprotonated = pdb_unprotonated.getPositions(asNumpy=True, frame=0) #* fileunit
-
-
-
-    # ======================
-    # Read protonated
-    # ======================
-    file_format = DIR_ProtonatedPdb.split(".")[-1]
-    if file_format =='pdb':
-        with open(DIR_ProtonatedPdb, 'r') as tempfile:
-            pdb_protonated = mmapp.pdbfile.PDBFile(tempfile)
-            fileunit = 1                            # NOTE nm is the native uit in pdb
-    if file_format =='cif':
-        with open(DIR_ProtonatedPdb, 'r') as tempfile:
-            pdb_protonated = mmapp.pdbxfile.PDBxFile(tempfile)
-            fileunit = 1.0                            # NOTE angstrom is the native uit in pdbx
-
-    pdb_position_protonated = pdb_protonated.getPositions(asNumpy=True, frame=0) #* fileunit
-
-
-
-
-    #top = mdtraj.Topology.from_openmm(pdb_protonated.topology) 
-    from openmm import Vec3
-    from openmm.unit import nanometers
-
-    # Overwrite exisiting
-    #pdb._positions = []
-    HeavyIndexMapper_H2NoH = { v:k for k,v in HeavyIndexMapper_NoH2H.items()}
-    pdb_protonated._positions = []
-    temppositions = []
-    for i in range(pdb_position_protonated.shape[0]):
-        if i not in HeavyIndexMapper_H2NoH.keys():
-            temppositions.append(
-                Vec3(pdb_position_protonated[i,0].astype(np.float64), 
-                     pdb_position_protonated[i,1].astype(np.float64), 
-                     pdb_position_protonated[i,2].astype(np.float64))*fileunit * 10.0
-                )*nanometers
-        else:
-            temppositions.append(
-                Vec3(   pdb_position_unprotonated[HeavyIndexMapper_H2NoH[i],0].astype(np.float64), 
-                        pdb_position_unprotonated[HeavyIndexMapper_H2NoH[i],1].astype(np.float64), 
-                        pdb_position_unprotonated[HeavyIndexMapper_H2NoH[i],2].astype(np.float64))*fileunit * 10.0
-                )*nanometers
-    pdb_protonated._positions = temppositions #.append(temppositions)
-
-    # ===================
-    # Save
-    # ===================
-    if file_format_unprotonated == 'cif':
-        with open(DIR_SavePdbFile, 'w') as tempfile:
-            mmapp.pdbxfile.PDBxFile.writeHeader(pdb_protonated.topology, file=tempfile,)
-            #for i in  range(len(pdb_protonated._positions)):
-            mmapp.pdbxfile.PDBxFile.writeModel(
-                                pdb_protonated.topology, pdb_protonated._positions, 
-                                file=tempfile, keepIds=True, modelIndex = 0)
-    else:
-        with open(DIR_SavePdbFile, 'w') as tempfile:
-            mmapp.pdbfile.PDBFile.writeHeader(pdb_protonated.topology, file=tempfile,)
-            #for i in  range(len(pdb_protonated._positions)):
-            mmapp.pdbfile.PDBFile.writeModel(
-                    pdb_protonated.topology, pdb_protonated._positions, 
-                    file=tempfile, keepIds=True, modelIndex = 0)
-            mmapp.pdbfile.PDBFile.writeFooter(pdb_protonated.topology, file=tempfile)
-
-
-
-
-
-    #return topology_df, top
 
 
 # ================
@@ -1058,150 +990,31 @@ def ShowActiveTensorboard():
 
 
 
-# =========================================
-# PBC related
-# ==========================================
-
-
-def VanillaReadPbc(structure_dir, User_BleedingMemberPercent = 0.01, User_BleedingIncrement = 0.05):
-    # NOTE we assumed the strcutrue is centered at centroid.
-    topology_df, _ = BasicPdbCifLoading(structure_dir)
-    xyz = topology_df[['x', 'y', 'z']].values
-
-    x_min, x_max = xyz[:,0].min(), xyz[:,0].max()
-    y_min, y_max = xyz[:,1].min(), xyz[:,1].max()
-    z_min, z_max = xyz[:,2].min(), xyz[:,2].max()
-
-
-    User_BleedingMemberCount = int(xyz.shape[0]*User_BleedingMemberPercent)
-
-
-    # NOTE this avoids cases where molecule are intactized in the file
-    # NOTE We will Rampup the Bleeding edge until we have more than 1000 members
-    User_Bleeding_X = 0.0
-    for i in range(100):
-        n_member = xyz[xyz[:,0] < x_min + User_Bleeding_X].shape[0] + xyz[xyz[:,0] > x_max - User_Bleeding_X].shape[0]
-        if n_member > User_BleedingMemberCount * 2:
-            break
-        User_Bleeding_X += User_BleedingIncrement
-
-    User_Bleeding_Y = 0.0
-    for i in range(100):
-        n_member = xyz[xyz[:,1] < y_min + User_Bleeding_Y].shape[0] + xyz[xyz[:,1] > y_max - User_Bleeding_Y].shape[0]
-        if n_member > User_BleedingMemberCount * 2:
-            break
-        User_Bleeding_Y += User_BleedingIncrement
-
-    User_Bleeding_Z = 0.0
-    for i in range(100):
-        n_member = xyz[xyz[:,2] < z_min + User_Bleeding_Z].shape[0] + xyz[xyz[:,2] > z_max - User_Bleeding_Z].shape[0]
-        if n_member > User_BleedingMemberCount * 2:
-            break
-        User_Bleeding_Z += User_BleedingIncrement
-
-    x_min = xyz[xyz[:,0] < x_min + User_Bleeding_X][:,0].mean()
-    x_max = xyz[xyz[:,0] > x_max - User_Bleeding_X][:,0].mean()
-
-    y_min = xyz[xyz[:,1] < y_min + User_Bleeding_Y][:,1].mean()
-    y_max = xyz[xyz[:,1] > y_max - User_Bleeding_Y][:,1].mean()
-
-    z_min = xyz[xyz[:,2] < z_min + User_Bleeding_Z][:,2].mean()
-    z_max = xyz[xyz[:,2] > z_max - User_Bleeding_Z][:,2].mean()
-
-
-    RectBox_ZCen = (z_min + z_max)/2
-
-    RectBox_Xsize = x_max - x_min
-    RectBox_Ysize = y_max - y_min
-    RectBox_Zsize = z_max - z_min
-
-    print(x_min, x_max)
-    return {    'X': (x_min , x_max), 
-                'Y': (y_min , y_max),
-                'Z': (z_min , z_max),
-                'RectBox_Xsize' : RectBox_Xsize,
-                'RectBox_Ysize' : RectBox_Ysize,
-                'RectBox_Zsize' : RectBox_Zsize,
-        } 
-    """
-    return {    'X': (-1 * RectBox_Xsize/2 , RectBox_Xsize/2), 
-                'Y': (-1 * RectBox_Ysize/2 , RectBox_Ysize/2),
-                'Z': (RectBox_ZCen - (RectBox_Zsize/2) , RectBox_ZCen + (RectBox_Zsize/2)),
-                'RectBox_Xsize' : RectBox_Xsize,
-                'RectBox_Ysize' : RectBox_Ysize,
-                'RectBox_Zsize' : RectBox_Zsize,
-            } 
-    """
-
-
-# NOTE These are subjected to be moved. 
-def CharmmGuiReadPbc(DIR_CharmmGuiFolder, User_Nm = True):
-    
-    # NOTE This is a function that reads a fixed input file called step5_assembly.str 
-    #      which is subjected to change if the CharmmGui owner decides to do so!
-    #      Ingeneral, what it provides is the following CHarmm Input param
-    # 
-    #      X: (min pbc boundary of X direction, max ...)
-    #      Y: ...
-    #      Z: ...
-    #      RectBox_Xsize: size of the box
-    #      RectBox_Ysize: ...
-    #      RectBox_Zsize: ...
-    file1 = open(DIR_CharmmGuiFolder + '/step5_assembly.str', 'r')
-    Lines = file1.readlines()
-    RectBox_Xsize = 0.0
-    RectBox_Ysize = 0.0
-    RectBox_Zsize = 0.0 
-
-    for l in Lines:
-        if l.startswith(" SET A "):
-            RectBox_Xsize = float(l.split(" = ")[1])
-        if l.startswith(" SET B "):
-            RectBox_Ysize = float(l.split(" = ")[1])
-        if l.startswith(" SET C "):
-            RectBox_Zsize = float(l.split(" = ")[1])
-        if l.startswith(" SET ZCEN "):
-            RectBox_ZCen = float(l.split(" = ")[1])
-
-    # NOTE These were in angstrom otherwise
-    if User_Nm:
-        RectBox_ZCen /= 10
-        RectBox_Xsize /= 10
-        RectBox_Ysize /= 10
-        RectBox_Zsize /= 10
-        
-
-    return {    'X': (-1 * RectBox_Xsize/2 , RectBox_Xsize/2), 
-                'Y': (-1 * RectBox_Ysize/2 , RectBox_Ysize/2),
-                'Z': (RectBox_ZCen - (RectBox_Zsize/2) , RectBox_ZCen + (RectBox_Zsize/2)),
-                'RectBox_Xsize' : RectBox_Xsize,
-                'RectBox_Ysize' : RectBox_Ysize,
-                'RectBox_Zsize' : RectBox_Zsize,
-            } 
-
-
-
-def EnforcePbc(X_df_, Dict_Pbc):
-
-
-    if Dict_Pbc is None:
-        print("WARNING. Dict_Pbc is None")
-        return X_df_
-    # NOTE This takes a topology dataframe with xyz and also the dict_pbc above to enforce the pbc
-    X_df = X_df_.copy()
-    X_df.loc[:,'x'] = X_df['x'].apply(
-        lambda i: i+Dict_Pbc['RectBox_Xsize'] if i < Dict_Pbc['X'][0] else i)
-    X_df.loc[:,'x'] = X_df['x'].apply(
-        lambda i: i-Dict_Pbc['RectBox_Xsize'] if i > Dict_Pbc['X'][1] else i)
-
-    X_df.loc[:,'y'] = X_df['y'].apply(
-        lambda i: i+Dict_Pbc['RectBox_Ysize'] if i < Dict_Pbc['Y'][0] else i)
-    X_df.loc[:,'y'] = X_df['y'].apply(
-        lambda i: i-Dict_Pbc['RectBox_Ysize'] if i > Dict_Pbc['Y'][1] else i)
-
-    X_df.loc[:,'z'] = X_df['z'].apply(
-        lambda i: i+Dict_Pbc['RectBox_Zsize'] if i < Dict_Pbc['Z'][0] else i)
-    X_df.loc[:,'z'] = X_df['z'].apply(
-        lambda i: i-Dict_Pbc['RectBox_Zsize'] if i > Dict_Pbc['Z'][1] else i)
-    return X_df
+# =======================================================================================
+#   Copyright 2020-present Jordy Homing Lam, JHML, University of Southern California
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#
+#    Redistribution and use in source and binary forms, with or without
+#    modification, are permitted provided that the following conditions are
+#    met:
+#
+#    *  Redistributions of source code must retain the above copyright notice, 
+#       this list of conditions and the following disclaimer.
+#    *  Redistributions in binary form must reproduce the above copyright notice, 
+#       this list of conditions and the following disclaimer in the documentation and/or 
+#       other materials provided with the distribution.
+#    *  Cite our work at Lam, J.H., Nakano, A., Katritch, V. REPLACE_WITH_INCHING_TITLE
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+# =========================================================================================
 
