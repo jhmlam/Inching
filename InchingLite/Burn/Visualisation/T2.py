@@ -1,3 +1,31 @@
+# =======================================================================================
+#   Copyright 2020-present Jordy Homing Lam, JHML, University of Southern California
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#
+#    Redistribution and use in source and binary forms, with or without
+#    modification, are permitted provided that the following conditions are
+#    met:
+#
+#    *  Redistributions of source code must retain the above copyright notice, 
+#       this list of conditions and the following disclaimer.
+#    *  Redistributions in binary form must reproduce the above copyright notice, 
+#       this list of conditions and the following disclaimer in the documentation and/or 
+#       other materials provided with the distribution.
+#    *  Cite our work at Lam, J.H., Nakano, A., Katritch, V. REPLACE_WITH_INCHING_TITLE
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+# =========================================================================================
+
 import torch
 import sys
 import tqdm
@@ -24,7 +52,7 @@ def Heigval_Heigvec_SqFluctPerMode_SqFluct_RatioSqFPM_RatioVar(H_eigval, H_eigve
     return SqFluctPerMode.unsqueeze(2), SqFluct, RatioSqFPM.unsqueeze(2), RatioVariance
 
 
-
+# NOTE For fun only! don't do this with >100 k atoms to fry your computer 
 @torch.no_grad()
 def Heigval_Heigvec_HccPairlist_HccBatch(H_eigval, H_eigvec, 
                                          plot_CC = True, device = torch.device(0), 
@@ -140,4 +168,30 @@ def Heigval_Heigvec_HccPairlist_HccBatch(H_eigval, H_eigvec,
 
 
 
-
+# =======================================================================================
+#   Copyright 2020-present Jordy Homing Lam, JHML, University of Southern California
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#
+#    Redistribution and use in source and binary forms, with or without
+#    modification, are permitted provided that the following conditions are
+#    met:
+#
+#    *  Redistributions of source code must retain the above copyright notice, 
+#       this list of conditions and the following disclaimer.
+#    *  Redistributions in binary form must reproduce the above copyright notice, 
+#       this list of conditions and the following disclaimer in the documentation and/or 
+#       other materials provided with the distribution.
+#    *  Cite our work at Lam, J.H., Nakano, A., Katritch, V. REPLACE_WITH_INCHING_TITLE
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+# =========================================================================================

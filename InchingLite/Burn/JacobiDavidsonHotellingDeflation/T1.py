@@ -1,6 +1,30 @@
-# ====================
-# ARCHIVED. This works
-# ==============================
+# =======================================================================================
+#   Copyright 2020-present Jordy Homing Lam, JHML, University of Southern California
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#
+#    Redistribution and use in source and binary forms, with or without
+#    modification, are permitted provided that the following conditions are
+#    met:
+#
+#    *  Redistributions of source code must retain the above copyright notice, 
+#       this list of conditions and the following disclaimer.
+#    *  Redistributions in binary form must reproduce the above copyright notice, 
+#       this list of conditions and the following disclaimer in the documentation and/or 
+#       other materials provided with the distribution.
+#    *  Cite our work at Lam, J.H., Nakano, A., Katritch, V. REPLACE_WITH_INCHING_TITLE
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+# =========================================================================================
 
 
 import cupyx.scipy.sparse
@@ -341,29 +365,23 @@ class OOC1_HalfMemA_KrylovLinearOperator(cupyx.scipy.sparse.linalg.LinearOperato
 # ================================
 
 
-def OOC5_systemmatrix_Q_r_F_tol_JdCorrectedZ(system_matrix, Q,
+def OOC4_systemmatrix_Q_r_tol_JdCorrectedZ(system_matrix, Q,
                 r,
-                F,tol,
+                tol,
                 User_HalfMemMode = True,
                 maxiter=20):
 
     N = Q.shape[0]
 
-    #print(F.shape)
-    
-    invF=cp.linalg.inv(F)
+
+
     x0=cp.random.random(N)*(tol/N)
 
 
 
 
     precon=None
-    right_hand_side = - r + Q.dot(
-                                invF).dot(
-                                    Q.T.dot(
-                                        r)
-                                        )
-    
+    right_hand_side = - r 
     # =======================================
     # Choice of solvers
     # ========================================
@@ -371,6 +389,7 @@ def OOC5_systemmatrix_Q_r_F_tol_JdCorrectedZ(system_matrix, Q,
     # NOTE As long as the matrix is kept positive definite it's okay to CG too.
 
     solver = InchingLite.Burn.JacobiDavidsonHotellingDeflation.IterativeSolvers.gmres
+    #solver = cupyx.scipy.sparse.linalg.minres
     z, _ = solver(system_matrix,right_hand_side,tol = tol,
                                 M = precon,
                                 maxiter = maxiter, x0 = x0)
@@ -384,35 +403,37 @@ def OOC5_systemmatrix_Q_r_F_tol_JdCorrectedZ(system_matrix, Q,
 # ========================
 
 def S_HeigvalJDMHD_HeigvecJDMHD(A,
-        v0=None,
+        
         k=1,
         tol=1e-10,
         maxiter=1000,
-        linear_solver='gmres',
-        linear_solver_maxiter=20,
+        User_CorrectionSolverMaxiter=20,
         
-        jmax=16,jmin=8,
-        sigma=None,
+        
+
 
         User_HalfMemMode= True,
-        converge_bound=1e-3,
-        gap_estimate=0.1,
+        User_IntermediateConvergenceTol=1e-3,
+        User_GapEstimate=0.1,
         User_FactoringToleranceOnCorrection = 1e-4,
-
-        User_Q_HotellingDeflation = None,
+        User_HD_Eigval = None,
+        User_HD_Eigvec = None,
         User_HotellingShift = 10.0
         ):
 
 
     # NOTE We have not included the linear solvers' preconditioner, 
     #      in most cases it does not really help much and you need to store and calculate the likely denser preconditoner e.g. ILU1
-    User_LinearSolverPreconditioner = False
-    linear_solver='gmres'
+    User_CorrectionSolverPreconditioner = False
+    jmax = k *2
+    jmin = k
+
+    User_CorrectionSolver ='gmres'  # NOTE A natural choice is MINRES rather than GMRES for the symmtric matrix
     N=A.shape[0]
 
-    assert User_HalfMemMode, "ABORTED. Only support half mem mode."
+    #assert User_HalfMemMode, "ABORTED. Only support half mem mode."
     
-    if User_Q_HotellingDeflation is None:
+    if User_HD_Eigvec is None:
         print("WARNING. Hotelling deflation not in use")
         _dohotelling = False
     else:
@@ -430,23 +451,18 @@ def S_HeigvalJDMHD_HeigvecJDMHD(A,
 
 
         # NOTE The first ritz vector v0
-        if v0 is None:
-            v0 = cp.random.random((N,1)) - 0.5
-        elif cp.ndim(v0) == 1: 
-            v0 = v0[:,cp.newaxis]
+        v0 = cp.random.random((N,1)) - 0.5
         v0 = v0/cp.sqrt((cp.multiply(v0,v0)).sum(axis=0)) 
-        print(v0.shape)
+
 
 
 
         # Placegolders
         Av = cupy.empty((N,)).astype(A.dtype)   # NOTE A v =: Av
         r =  cupy.empty((N,1)).astype(A.dtype)   # NOTE Av - \theta v =: r
-        #r_ =  cupy.zeros((N,)).astype(A.dtype)
+        
         eigval_converged = cp.zeros(k)
-        Q = cp.zeros([N,0]) # NOTE Q and F are variable length arrays build up upon successful convergence.
-        F = cp.zeros([0,0])
-
+        Q = cp.zeros([N,0]) 
         # ===========================================
         # NOTE define krylov protocol to be used. 
         # ============================================
@@ -465,7 +481,7 @@ def S_HeigvalJDMHD_HeigvecJDMHD(A,
     KrylovAv(A,cupy.ravel(v0),Av)
 
     if _dohotelling:
-        InchingLite.Burn.Orthogonalization.T3.T3_QHotelling_x_Ax_HotelledAx(User_Q_HotellingDeflation, v0, Av, HotellingShift=User_HotellingShift)
+        InchingLite.Burn.Orthogonalization.T3.T3_QHotelling_x_Ax_HotelledAx(User_HD_Eigvec, v0, Av, HotellingShift=User_HotellingShift)
 
 
     V = v0
@@ -478,30 +494,33 @@ def S_HeigvalJDMHD_HeigvecJDMHD(A,
     
 
     n_RitzConverged = 0
-    st = time.time()
     for i_iter in range(maxiter):
 
         S, W = cp.linalg.eigh(G, UPLO='L')
-
         while True:
-            #Ritz approximation.
-            theta,u = S[0],V.dot(W[:,:1])  
-            #print(r.shape, cupy.ravel(r).shape)          
-            KrylovAv(A,cupy.ravel(u),cupy.ravel(r))
+
+            theta = S[0]
+            u = V.dot(W[:,:1]) 
             
+
+            KrylovAv(A,cupy.ravel(u),cupy.ravel(r))
+
+            # NOTE I dropped the idea of EED here because it will only be applicable once when 1 eig val converged.
+            #print(cupy.array_equal(cupy.ravel(r), u_prev), i_iter, n_RitzConverged)
+           # print(cupy.ravel(r) -  u_prev)
+            #print("equal?")
             # NOTE This is necessary unfortunately
             if _dohotelling:
                 # TODO The kernel here may be memory unstable for unknown reason. Dig into this if necessary.
                 # NOTE This is unexpectedly slower, likely because the matrix has to be interpreted.
-                r = InchingLite.Burn.Orthogonalization.T3.T3_QHotelling_x_Ax_HotelledAx(User_Q_HotellingDeflation, cupy.ravel(u) , cupy.ravel(r), HotellingShift=User_HotellingShift)
-                #r = T3_QHotelling_x_Ax_HotelledAx(User_Q_HotellingDeflation, cupy.ravel(u) , cupy.ravel(r), HotellingShift=User_HotellingShift)
+                r = InchingLite.Burn.Orthogonalization.T3.T3_QHotelling_x_Ax_HotelledAx(User_HD_Eigvec, cupy.ravel(u) , cupy.ravel(r), HotellingShift=User_HotellingShift)
                 r = r[:,None]
                 
                 """
                 # NOTE THis is correct
                 r += (User_HotellingShift*(
-                            (User_Q_HotellingDeflation@cupy.ravel(u))[None,:]
-                            )@User_Q_HotellingDeflation).T
+                            (User_HD_Eigvec@cupy.ravel(u))[None,:]
+                            )@User_HD_Eigvec).T
                 """
 
 
@@ -516,24 +535,21 @@ def S_HeigvalJDMHD_HeigvecJDMHD(A,
                 printing_ = 100
 
             if i_iter % printing_ == 0:
-                print("%s, %s, %s, %s, %s" %(i_iter, cur_tol, theta, gap_estimate, n_RitzConverged))
-            sigma = theta - gap_estimate
+                print("%s, %s, %s, %s, %s" %(i_iter, cur_tol, theta, User_GapEstimate, n_RitzConverged))
+            sigma = theta - User_GapEstimate
 
             
 
 
             # NOTE This is a small matrix
-            F_ = cp.vstack((cp.hstack((F , Q.T.dot(u))),
-                            cp.hstack((u.T.dot(Q), u.T.dot(u)))))
             Q_= cp.concatenate([Q,u],axis=1)
-            #print(Q_.shape, F_.shape) # NOTE It does not seem to be the build up of memoryrby Q and F!
-            #print(S.shape)
+
             # NOTE This is the not-converged break
             if cur_tol > tol or ( n_RitzConverged != k-1 and len(S) <= 1):
                 break
 
 
-
+            
             # ==================================
             # Compile the converged and postprocessing
             # ===================================================
@@ -541,7 +557,7 @@ def S_HeigvalJDMHD_HeigvecJDMHD(A,
             eigval_converged[n_RitzConverged] = theta
             n_RitzConverged += 1
             
-            F = F_
+            #print(n_RitzConverged)
             Q = Q_
 
 
@@ -570,7 +586,7 @@ def S_HeigvalJDMHD_HeigvecJDMHD(A,
             G, W = cp.diag(S),cp.identity(S.shape[0])
 
         # NOTE compute the shift
-        if cur_tol < converge_bound:
+        if cur_tol < User_IntermediateConvergenceTol:
             shift = theta
         else:
             shift = sigma
@@ -581,45 +597,31 @@ def S_HeigvalJDMHD_HeigvecJDMHD(A,
 
         if User_HalfMemMode:
             system_matrix = OOC1_HalfMemA_KrylovLinearOperator(A, 
-                        shift  = shift, QHotelling = User_Q_HotellingDeflation, 
+                        shift  = shift, QHotelling = User_HD_Eigvec, 
                                         HotellingShift = User_HotellingShift,
                                         _dohotelling = _dohotelling)
         else:
             system_matrix = OOC1_FullMemA_KrylovLinearOperator(A, shift  = shift, 
-                                        QHotelling = User_Q_HotellingDeflation, 
+                                        QHotelling = User_HD_Eigvec, 
                                         HotellingShift = User_HotellingShift,
                                         _dohotelling = _dohotelling)
 
-        z = OOC5_systemmatrix_Q_r_F_tol_JdCorrectedZ(system_matrix,
+        z = OOC4_systemmatrix_Q_r_tol_JdCorrectedZ(system_matrix,
                         Q=Q_,
                         r=r,
-                        F=F_,
                         User_HalfMemMode= User_HalfMemMode,
                         tol = cur_tol*User_FactoringToleranceOnCorrection,
-                        maxiter=linear_solver_maxiter
+                        maxiter=User_CorrectionSolverMaxiter
                         )
 
 
         system_matrix = None
         del system_matrix
 
-        # NOTE Addededed
-        F_ = None
-        del F_
-
-        """
-        # NOTE FRO on Q_ and then V
-        z = InchingLite.Burn.Orthogonalization.T2.T2_vnext_V_MGSvnext(z, Q_) # NOTE Unstable for large structure. 
-        z = z[:,cp.newaxis]
-        
-        #z = OOC2_qnext_Q_MGSqnext(z,Q_)
-        z = OOC2_qnext_Q_ICGSqnext(z,V) 
-        """
-
         # NOTE FRO on z
         z = z[:,cp.newaxis]
         z = OOC2_qnext_Q_MGSqnext(z,Q_)
-        z = OOC2_qnext_Q_ICGSqnext(z,V)
+        z = OOC2_qnext_Q_ICGSqnext(z,V) # NOTE Do not overdo this
 
 
         KrylovAv(A,cupy.ravel(z),cupy.ravel(Av))
@@ -629,7 +631,7 @@ def S_HeigvalJDMHD_HeigvecJDMHD(A,
             Av = Av[:,None]
 
         if _dohotelling:
-            Av += User_HotellingShift*((User_Q_HotellingDeflation@cupy.ravel(z))[None,:]@User_Q_HotellingDeflation).T
+            Av += User_HotellingShift*((User_HD_Eigvec@cupy.ravel(z))[None,:]@User_HD_Eigvec).T
 
 
         # NOTE Construct small matrix G
@@ -684,58 +686,30 @@ def S_HeigvalJDMHD_HeigvecJDMHD(A,
 
 
 
-
-
-
-
-
-
-
-
-
-# ==========================
-# OBSOLETE
-# ============================
-def OBSOLETE_OOC6_A_Q_r_F_shift_tol_JdCorrectedZ(A,Q,
-                r,
-                F,shift,tol,
-                #method='gmres',
-                User_HalfMemMode = True,
-                maxiter=20):
-
-    N = Q.shape[0]
-
-    #print(F.shape)
-    
-    invF=cp.linalg.inv(F)
-    x0=cp.random.random(N)*(tol/N)
-
-
-
-
-    if User_HalfMemMode:
-        system_matrix = OOC1_HalfMemA_KrylovLinearOperator(A, shift  = shift)
-    else:
-        system_matrix = OOC1_FullMemA_KrylovLinearOperator(A, shift  = shift)
-
-
-    precon=None
-    right_hand_side = - r + Q.dot(
-                                invF).dot(
-                                    Q.T.dot(
-                                        r)
-                                        )
-    
-    # =======================================
-    # Choice of solvers
-    # ========================================
-    # TODO Should also try minres 
-    # NOTE As long as the matrix is kept positive definite it's okay to CG too.
-    #      
-    solver = InchingLite.Burn.JacobiDavidson.IterativeSolvers.gmres
-    z, _ = solver(system_matrix,right_hand_side,tol = tol,
-                                M = precon,
-                                maxiter = maxiter, x0 = x0)
-   
-    return z
-
+# =======================================================================================
+#   Copyright 2020-present Jordy Homing Lam, JHML, University of Southern California
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#
+#    Redistribution and use in source and binary forms, with or without
+#    modification, are permitted provided that the following conditions are
+#    met:
+#
+#    *  Redistributions of source code must retain the above copyright notice, 
+#       this list of conditions and the following disclaimer.
+#    *  Redistributions in binary form must reproduce the above copyright notice, 
+#       this list of conditions and the following disclaimer in the documentation and/or 
+#       other materials provided with the distribution.
+#    *  Cite our work at Lam, J.H., Nakano, A., Katritch, V. REPLACE_WITH_INCHING_TITLE
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+# =========================================================================================
