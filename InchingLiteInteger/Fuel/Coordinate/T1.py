@@ -38,7 +38,7 @@ import sys
 import tqdm
 import gc
 
-
+import platform
 
 import numpy as np
 #import numba as nb
@@ -87,7 +87,11 @@ class X_cKDTreePbcXy():
     def query_ball_point(self, xx, rc_Gamma, p=2., eps=0, 
                         workers=-1, return_sorted=None, return_length=False # NOTE THese are not used but we followed the same flags for coding compatibility only 
                         ):
-
+        User_Platform = platform.system()
+        if User_Platform != "Linux":
+            n_workers = 1
+        else:
+            n_workers = -1
         # NOTE It is correct iff the PBC is larger than the rc gamma.
         assert (self.User_DictCharmmGuiPbc['RectBox_Xsize'] > rc_Gamma), "ABORTED. The PBC box size X is smaller than rc gamma."
         assert (self.User_DictCharmmGuiPbc['RectBox_Ysize'] > rc_Gamma), "ABORTED. The PBC box size Y is smaller than rc gamma."
@@ -128,7 +132,7 @@ class X_cKDTreePbcXy():
                 nnlolol.append(
                         self.atomtree.query_ball_point(
                                 xx , 
-                                rc_Gamma, p=p, eps=eps, workers=-1, 
+                                rc_Gamma, p=p, eps=eps, workers=n_workers, 
                                 return_sorted=None, return_length=False).tolist()
                                 )
             else:
@@ -138,7 +142,7 @@ class X_cKDTreePbcXy():
                     nnlolol.append(
                         self.atomtree.query_ball_point(
                                 xx + (self.BoxsizeVector * instruction[i_instruction]) , 
-                                rc_Gamma, p=p, eps=eps, workers=-1, 
+                                rc_Gamma, p=p, eps=eps, workers=n_workers, 
                                 return_sorted=None, return_length=False).tolist()
                                 )
                 else:
@@ -204,7 +208,12 @@ def X_KdCuthillMckeeOrder(  X,
 
     rc_Gamma /= 10.0      # nm
 
-
+    User_Platform = platform.system()
+    if User_Platform != "Linux":
+        n_workers = 1
+    else:
+        print("On Linux")
+        n_workers = -1
 
     if User_DictCharmmGuiPbc is None:
         atomtree = cKDTree(X)
@@ -227,7 +236,7 @@ def X_KdCuthillMckeeOrder(  X,
     for i in tqdm.tqdm(range(int(n_atoms/User_maxleafsize)+1)):
         start = i*User_maxleafsize
         end   = (i+1)*User_maxleafsize
-        nnlol = atomtree.query_ball_point(X[start:end,:], rc_Gamma, p=2., eps=0, workers=-1, return_sorted=None, return_length=False)
+        nnlol = atomtree.query_ball_point(X[start:end,:], rc_Gamma, p=2., eps=0, workers=n_workers, return_sorted=None, return_length=False)
 
         # NOTE Collect some stat
         tempdeg = list(map(lambda n: len(n), nnlol))
@@ -265,7 +274,7 @@ def X_KdCuthillMckeeOrder(  X,
 
                     # Unvisited neighbors
                     ind = atomtree.query_ball_point(
-                        X[i,:], rc_Gamma, p=2., eps=0, workers=-1, return_sorted=True, return_length=False)[::-1]
+                        X[i,:], rc_Gamma, p=2., eps=0, workers=n_workers, return_sorted=True, return_length=False)[::-1]
                     #print(type(ind))
 
                     for jj in range(len(ind)):
@@ -339,7 +348,12 @@ def X_KdUngappedMinMaxNeighbor(  X,
     # ============================
     # Preprocessing
     # ============================
-
+    User_Platform = platform.system()
+    if User_Platform != "Linux":
+        n_workers = 1
+    else:
+        print("On Linux")
+        n_workers = -1
     n_atoms = X.shape[0]
     degree = np.zeros(n_atoms, dtype=np.int32)
     order = np.zeros(n_atoms, dtype=np.int32)
@@ -380,7 +394,7 @@ def X_KdUngappedMinMaxNeighbor(  X,
     for i in tqdm.tqdm(range(len(batch_head) - 1)):
         start = batch_head[i]           
         end   = batch_head[i+1]
-        nnlol = atomtree.query_ball_point(X[start:end,:], rc_Gamma, p=2., eps=0, workers=-1, return_sorted=None, return_length=False)
+        nnlol = atomtree.query_ball_point(X[start:end,:], rc_Gamma, p=2., eps=0, workers=n_workers, return_sorted=None, return_length=False)
 
 
         #if CollectStat:
@@ -488,7 +502,12 @@ def X_KdMinMaxNeighbor(  X,
     # ============================
     # Preprocessing
     # ============================
-
+    User_Platform = platform.system()
+    if User_Platform != "Linux":
+        n_workers = 1
+    else:
+        print("On Linux")
+        n_workers = -1
     n_atoms = X.shape[0]
     degree = np.zeros(n_atoms, dtype=np.int32)
     order = np.zeros(n_atoms, dtype=np.int32)
@@ -511,7 +530,7 @@ def X_KdMinMaxNeighbor(  X,
     for i in range(len(batch_head) - 1):
         start = batch_head[i]
         end   = batch_head[i+1]
-        nnlol = atomtree.query_ball_point(X[start:end,:], rc_Gamma, p=2., eps=0, workers=-1, return_sorted=None, return_length=False)
+        nnlol = atomtree.query_ball_point(X[start:end,:], rc_Gamma, p=2., eps=0, workers=n_workers, return_sorted=None, return_length=False)
 
         nnlolflat = list(itertools.chain(*nnlol))
         if SliceForm:
