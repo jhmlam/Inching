@@ -7,7 +7,7 @@ The Normal Mode Analysis (NMA) is a standard approach to elucidate the anisotrop
 - [x] Developed a Globally-Sparse-Yet-Locally-Dense computational approach applicable to both small- and large- macromolecules.
 - [x] Implemented several GPU-resident Eigensolvers for Sparse Symmetric Matrices (Jacobi Davidson Method, Thick Restart Lanczos Method, Implicitly Restarted Lanczos Method)
 - [x] Modularized support for seamless integration of Chebyshev filter diagonalization, sum decomposition, and external explicit deflation, among other techniques.
-- [x] Achieved Linear scaling in run time, with constant memory use, relative to the number of modes. See CTRLM
+- [x] Achieved Linear Scaling in run time, with constant memory use, relative to the number of modes. See CTRLM
 
 
 Figure 1.
