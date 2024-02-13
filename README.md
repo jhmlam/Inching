@@ -10,7 +10,6 @@ The Normal Mode Analysis (NMA) is a standard approach to elucidate the anisotrop
 - [x] Achieved Linear Scaling in run time, with constant memory use, relative to the number of modes. See CTRLM
 
 
-Figure 1.
 
 ![Alt Text](/assets/Animation_Inching_3j3q_06.gif)
 
