@@ -16,13 +16,13 @@ The Normal Mode Analysis (NMA) is a standard approach to elucidate the anisotrop
 
 
 ## Summary
-This is a codebase for `XYZZ` used in the following paper
+This is a codebase for the INCHING algorithm used in the following paper
 
-> "VDFVSDVV" by ABBCBC [[arXiv](https://arxiv.org/abs/2106.dasd342342354)]
+> Lam, J.H., Nakano, A. & Katritch, V. Scalable computation of anisotropic vibrations for large macromolecular assemblies. Nat Commun 15, 3479 (2024). https://doi.org/10.1038/s41467-024-47685-8
 
-Here's a Colab notebook which contains an example for tCCCCCC
+Here's a Google Colab notebook running on a T4 GPU for free. For performant computing, please go to `Notebook`, install the software locally and use it on a fair-standing GPU e.g. RTX4090 NVIDIA with 24 GB.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/XYSSDFFSDFS)  
+[![Click to try on Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/jhmlam/Inching/blob/main/GoogleColab/GoogleColab_Inching_v023_ReleaseOkay.ipynb)
 
 
 
