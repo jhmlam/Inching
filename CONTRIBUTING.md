@@ -5,7 +5,7 @@ from the community. Please feel free to open issues or submit patches (preferabl
 as pull requests) any time. For planned larger contributions, it is often
 beneficial to get in contact with one of the principal developer, Jordy Homing Lam first.
 
-Inching and its contributions are licensed under the MIT license (see
+Inching and its contributions are licensed under the Apache license (see
 [LICENSE.md](LICENSE.md)). As a contributor, you certify that all your
 contributions are in conformance with the *Developer Certificate of Origin
 (Version 1.1)*, which is reproduced below.
