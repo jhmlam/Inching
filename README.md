@@ -17,21 +17,17 @@ Here's a Google Colab notebook running on a T4 GPU for free. For performant comp
 
 
 
-## Contributions
+## Our Contributions
 - [x] Developed a Globally-Sparse-Yet-Locally-Dense computational approach applicable to both small- and large- macromolecules.
 - [x] Implemented several GPU-resident Eigensolvers for Sparse Symmetric Matrices (Jacobi Davidson Method, Thick Restart Lanczos Method, Implicitly Restarted Lanczos Method)
 - [x] Modularized support for seamless integration of Chebyshev filter diagonalization, sum decomposition, and external explicit deflation, among other techniques.
-- [x] Achieved Linear Scaling in run time, with constant memory use, relative to the number of modes. See CTRLM
+- [x] Achieved Linear Scaling in run time, with constant memory use, relative to the number of modes. See CTRLM.
 
 
 
 ![Alt Text](/assets/Animation_Inching_3j3q_06.gif)
 
 
-
-## How to contribute
-
-We have a detailed account of the contribution procedure and guidelines in the corresponding file: [CONTRIBUTING](CONTRIBUTING.md)
 
 
 
