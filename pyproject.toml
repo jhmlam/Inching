@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "inching"
+version = "1.1.0"
+description = "Scalable GPU computation of anisotropic vibrations (normal modes) for large macromolecular assemblies"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [
+  { name = "Jordy Homing Lam" },
+]
+keywords = ["normal-mode-analysis", "elastic-network-model", "eigensolver", "GPU", "cupy", "structural-biology"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "Topic :: Scientific/Engineering :: Chemistry",
+  "Topic :: Scientific/Engineering :: Physics",
+  "Environment :: GPU :: NVIDIA CUDA",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: Microsoft :: Windows",
+]
+
+# Hard dependencies: imported at module level somewhere in InchingLiteInteger.
+# Lower bounds come from the first release carrying the API the code calls
+# (see the PR that introduced this file); there are no verified upper bounds.
+#
+# CuPy is deliberately NOT listed here. On PyPI it ships as CUDA-specific wheels
+# (cupy-cuda11x / cupy-cuda12x); on conda it is a single package selected by
+# cuda-version. Pick one of the extras below, or install cupy via conda.
+# CuPy 14 removed cupy.cusparse and rebased cupyx.scipy.sparse, both of which
+# this package relies on, hence the <14 ceiling on the extras.
+dependencies = [
+  "numpy>=1.21",
+  "scipy>=1.7",
+  "pandas>=1.1",
+  "tqdm>=4",
+  "matplotlib>=3.4",
+  "torch>=1.11",
+  "openmm>=7.6",
+  "mdtraj>=1.9.7",
+]
+
+[project.optional-dependencies]
+cuda11 = ["cupy-cuda11x>=11.5,<14"]
+cuda12 = ["cupy-cuda12x>=12,<14"]
+# Only imported inside plotting / monitoring helpers (util.py, Fuel/T1.py)
+viz = ["plotly>=5", "seaborn>=0.11", "tensorboard>=2"]
+test = ["pytest>=7"]
+
+[project.urls]
+Homepage = "https://github.com/jhmlam/Inching"
+Repository = "https://github.com/jhmlam/Inching"
+Paper = "https://doi.org/10.1038/s41467-024-47685-8"
+Colab = "https://colab.research.google.com/github/jhmlam/Inching/blob/main/GoogleColab/GoogleColab_Inching_v023_ReleaseOkay.ipynb"
+
+[tool.setuptools.packages.find]
+include = ["InchingLiteInteger*"]
+namespaces = false
