@@ -31,7 +31,7 @@ Activate the environment before running (CuPy compiles its kernels with the CUDA
 Option B, pip, on top of an existing CUDA 12 PyTorch install (what Google Colab does):
 ```
 pip install openmm mdtraj cupy-cuda12x torch numpy scipy pandas matplotlib seaborn plotly tqdm
-pip install --no-deps git+https://github.com/jhmlam/Inching.git@v1.1
+pip install --no-deps git+https://github.com/jhmlam/Inching.git@v1.1.1
 ```
 
 Example on ubiquitin (PDB 1UBQ, 660 atoms), in any working folder; inputs are read from and outputs written under the current directory:
