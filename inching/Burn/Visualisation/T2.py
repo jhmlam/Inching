@@ -54,7 +54,7 @@ def Heigval_Heigvec_SqFluctPerMode_SqFluct_RatioSqFPM_RatioVar(H_eigval, H_eigve
 
 @torch.no_grad()
 def Heigval_Heigvec_HccPairlist_HccBatch(H_eigval, H_eigvec, 
-                                         plot_CC = True, device = torch.device(0), 
+                                         plot_CC = True, device = torch.device("cuda"), 
                                          c_mode = 5, SelfOnly = True):
     # NOTE The Hcc Batch is sorted by eigval i * eigval j, which is by default as pair indices are sorted! 
     # (0,0) (0,1) (0,2) .... (k-1,k)
