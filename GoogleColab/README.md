@@ -1,3 +1,5 @@
 # Click the notebook!
 
-These notebooks target v1.0 (CUDA 11.8, package `InchingLiteInteger`, zenodov1.0 zip) and currently fail on Colab. A v1.1 notebook (`pip install git+https://github.com/jhmlam/Inching.git@v1.1`) is planned.
+`GoogleColab_Inching_v1.1.ipynb`: current notebook (pip-installs v1.1 on top of Colab's torch + cupy; T4 is enough for the 1UBQ example).
+
+`GoogleColab_Inching_v018/v023_ReleaseOkay.ipynb`: the v1.0 (paper) notebooks; they need condacolab + CUDA 11.8 and no longer run on Colab.
