@@ -21,9 +21,9 @@ Here's a Google Colab notebook running on a T4 GPU for free. For performant comp
 
 Requirements: Linux, an NVIDIA GPU, Python >= 3.11.
 
-Option A, conda (recommended; everything incl. CUDA libraries comes from conda-forge):
+Option A, conda (recommended; everything incl. CUDA libraries comes from conda-forge, `inching` itself from the `jhmlam` channel):
 ```
-conda create -n inching -c conda-forge inching
+conda create -n inching -c conda-forge -c jhmlam inching
 conda activate inching
 ```
 Activate the environment before running (CuPy compiles its kernels with the CUDA headers of the environment).
@@ -31,12 +31,15 @@ Activate the environment before running (CuPy compiles its kernels with the CUDA
 Option B, pip, on top of an existing CUDA 12 PyTorch install (what Google Colab does):
 ```
 pip install openmm mdtraj cupy-cuda12x torch numpy scipy pandas matplotlib seaborn plotly tqdm
-pip install --no-deps git+https://github.com/jhmlam/Inching.git@v1.1
+pip install --no-deps git+https://github.com/jhmlam/Inching.git@v1.1.1
 ```
 
-Example on ubiquitin (PDB 1UBQ, 660 atoms):
+Example on ubiquitin (PDB 1UBQ, 660 atoms), in any working folder; inputs are read from and outputs written under the current directory:
 ```
+mkdir -p ~/inching-test && cd ~/inching-test
 wget https://files.rcsb.org/download/1UBQ.pdb
+conda create -n inching -c conda-forge -c jhmlam inching
+conda activate inching
 inching info 1UBQ.pdb -k 16            # CPU only: atoms, neighbours, Hessian nnz, int32 ok?, GPU memory estimate
 inching nma  1UBQ.pdb -k 16 -o out     # lowest 16 non-rigid modes (default solver trlmhd; --solver jdmhd|irlmhd)
 inching animate 1UBQ.pdb out/1UBQ_eigvec.npy --modes 0-5 --amplitude 2 -o out

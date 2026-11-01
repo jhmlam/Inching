@@ -83,7 +83,7 @@ def X_D_K_Hessian(X,  D, Gamma,
     # Version 3 of Hessian Making
     # ===================================
     # NOTE Highly memory demanding. 
-    hessian_torch_put = torch.zeros((dof,dof), device = torch.device(0)).type(dtype_temp)
+    hessian_torch_put = torch.zeros((dof,dof), device = torch.device("cuda")).type(dtype_temp)
     for i in range(len(batch_head)-1):
 
         # ==============================================
@@ -186,7 +186,7 @@ def X_D_K_Hessian(X,  D, Gamma,
         # NOTE This version do it by put. 0.8 second for a (2500*3)^2 matrix, but consider you have 100 proteins in one epoch...
         #      but still greater than all versions below (and also numpy in cpu of course!) 
         st = time.time()
-        hessian_torch_put = torch.zeros((dof,dof), device = torch.device(0))
+        hessian_torch_put = torch.zeros((dof,dof), device = torch.device("cuda"))
         hessian_torch_put.index_put_( tuple(triu_indices_element),  
                             torch.flatten(einsum, start_dim=0, end_dim=-1)) 
         # Symmetrize
@@ -208,7 +208,7 @@ def X_D_K_Hessian(X,  D, Gamma,
         # ==========================
         # This version do it by sum. 70 seconds for a (2500*3)^2 matrix, but consider you have 100 proteins in one epoch...
         st = time.time()
-        hessian_torch = torch.zeros((dof,dof), device = torch.device(0))
+        hessian_torch = torch.zeros((dof,dof), device = torch.device("cuda"))
         ein_k = 0
         for i in triu_indices_:
             ii = i[0]*3

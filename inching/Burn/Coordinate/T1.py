@@ -44,7 +44,7 @@ import inching.util
 
 
 @torch.no_grad()
-def X_Xcentered(X, device = torch.device(0)):
+def X_Xcentered(X, device = torch.device("cuda")):
     return X-torch.mean(X, axis=0)
 
 
@@ -90,7 +90,7 @@ def X_Dbatched(X, maxleafsize = 100, rc_Gamma = 15.0):
 
 
 @torch.no_grad()
-def X_D(X, device = torch.device(0)):
+def X_D(X, device = torch.device("cuda")):
 
     n_atoms = X.shape[0]
     
@@ -116,7 +116,7 @@ def X_D(X, device = torch.device(0)):
 
 # NOTE This is the BIG case Gamma in 2007 Bahar i.e. Laplacian a.k.a. Kirchoff in GNM
 @torch.no_grad()
-def D_K(R, rc_Gamma = 1.0, device = torch.device(0), M_GammaMask = None):
+def D_K(R, rc_Gamma = 1.0, device = torch.device("cuda"), M_GammaMask = None):
     """kirchoff matrix is the connectivity matrix
        diagonal gives 
        offdiag gives adjacency matrix  
@@ -141,7 +141,7 @@ def D_K(R, rc_Gamma = 1.0, device = torch.device(0), M_GammaMask = None):
 
 # NOTE This is the SMALL case gamma in 2007 Bahar i.e. ANM gamma spring constant taken to be 1 when within rc NOT Kirchoff!
 @torch.no_grad()
-def D_MaskRc(D, rc_Gamma = 1.0,M_GammaMask = None , device = torch.device(0)):
+def D_MaskRc(D, rc_Gamma = 1.0,M_GammaMask = None , device = torch.device("cuda")):
 
     Gamma = (D <= rc_Gamma).to(device)
     if M_GammaMask is not None:
@@ -154,7 +154,7 @@ def D_MaskRc(D, rc_Gamma = 1.0,M_GammaMask = None , device = torch.device(0)):
 
 # NOTE OBSOLETE Any square symetric matrix to normaalised eig 
 @torch.no_grad()
-def S_Neigval_Neigvec(K, device = torch.device(0)):
+def S_Neigval_Neigvec(K, device = torch.device("cuda")):
     """
     This function does a few things. 
     1. rearrange the eig vec in descending order of eigval
@@ -183,14 +183,14 @@ def S_Neigval_Neigvec(K, device = torch.device(0)):
 # ==================================
 # Unorder the cuthill order
 # ==================================
-def Heigvec_HeigvecUnordered(Heigvec, cuthill_undoorder = [], device = torch.device(0)):
+def Heigvec_HeigvecUnordered(Heigvec, cuthill_undoorder = [], device = torch.device("cuda")):
     # This assumes taking in a  (n_eigpair, n_atoms, 3) tensor and a cuthill_unorder np array
     
     return Heigvec[:,cuthill_undoorder,:]
 
 
 
-def X_XUnordered(X, cuthill_undoorder = [], device = torch.device(0)):
+def X_XUnordered(X, cuthill_undoorder = [], device = torch.device("cuda")):
     # This assumes taking in a  (n_atoms, 3) tensor and a cuthill_unorder np array
 
     return X[cuthill_undoorder,:]
