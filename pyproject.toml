@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "inching"
-version = "1.1.1"
+version = "1.1.2"
 description = "Scalable computation of anisotropic vibrations for large macromolecular assemblies"
 readme = "README.md"
 license = "Apache-2.0"

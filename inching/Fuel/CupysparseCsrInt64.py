@@ -45,6 +45,9 @@ from cupy._core import _accelerator
 from cupy.cuda import cub
 from cupy.cuda import runtime
 from cupyx import cusparse
+from cupy_backends.cuda.libs import cusparse as _cusparse
+from cupy._core import _dtype
+from cupy.cuda import device
 from cupyx.scipy.sparse import _base
 from .CupysparseCompressInt64 import _compressed_sparse_matrix
 
@@ -53,7 +56,27 @@ from cupyx.scipy.sparse import SparseEfficiencyWarning
 from cupyx.scipy.sparse import _util
 
 
-class csr_matrix(_base.spmatrix, _compressed_sparse_matrix):
+def _spmv(a, x):
+    handle = device.get_cusparse_handle()
+    y = cupy.empty((a.shape[0],), dtype=a.dtype)
+    alpha = numpy.array(1.0, a.dtype)
+    beta = numpy.array(0.0, a.dtype)
+    da = cusparse.SpMatDescriptor.create(a)
+    dx = cusparse.DnVecDescriptor.create(x)
+    dy = cusparse.DnVecDescriptor.create(y)
+    op = _cusparse.CUSPARSE_OPERATION_NON_TRANSPOSE
+    alg = _cusparse.CUSPARSE_MV_ALG_DEFAULT
+    dt = _dtype.to_cuda_dtype(a.dtype)
+    buf = cupy.empty(_cusparse.spMV_bufferSize(handle, op, alpha.ctypes.data, da.desc, dx.desc, beta.ctypes.data, dy.desc, dt, alg), cupy.int8)
+    _cusparse.spMV(handle, op, alpha.ctypes.data, da.desc, dx.desc, beta.ctypes.data, dy.desc, dt, alg, buf.data.ptr)
+    return y
+
+
+_bases = ((_compressed_sparse_matrix,) if issubclass(_compressed_sparse_matrix, _base.spmatrix)
+          else (_base.spmatrix, _compressed_sparse_matrix))
+
+
+class csr_matrix(*_bases):
 
     """Compressed Sparse Row matrix.
 
@@ -162,7 +185,7 @@ class csr_matrix(_base.spmatrix, _compressed_sparse_matrix):
             elif other.ndim == 1:
                 self.sum_duplicates()
                 other = cupy.asfortranarray(other)
-                return cusparse.spmv(self, other)
+                return _spmv(self, cupy.ascontiguousarray(other, dtype=self.dtype))
             elif other.ndim == 2:
                 self.sum_duplicates()
                 if cusparse.check_availability('csrmm2'):
@@ -171,11 +194,13 @@ class csr_matrix(_base.spmatrix, _compressed_sparse_matrix):
                     csrmm = cusparse.spmm
                 else:
                     raise NotImplementedError
-                return csrmm(self, cupy.asfortranarray(other))
+                return cupy.stack([_spmv(self, cupy.ascontiguousarray(other[:, j], dtype=self.dtype)) for j in range(other.shape[1])], axis=1)
             else:
                 raise ValueError('could not interpret dimensions')
         else:
             return NotImplemented
+
+    __mul__ = _matmul_dispatch
 
     def __truediv__(self, other):
         """Point-wise division by another matrix, vector or scalar"""
