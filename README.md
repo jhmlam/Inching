@@ -34,9 +34,12 @@ pip install openmm mdtraj cupy-cuda12x torch numpy scipy pandas matplotlib seabo
 pip install --no-deps git+https://github.com/jhmlam/Inching.git@v1.1
 ```
 
-Example on ubiquitin (PDB 1UBQ, 660 atoms):
+Example on ubiquitin (PDB 1UBQ, 660 atoms), in any working folder; inputs are read from and outputs written under the current directory:
 ```
+mkdir -p ~/inching-test && cd ~/inching-test
 wget https://files.rcsb.org/download/1UBQ.pdb
+conda create -n inching -c conda-forge -c jhmlam inching
+conda activate inching
 inching info 1UBQ.pdb -k 16            # CPU only: atoms, neighbours, Hessian nnz, int32 ok?, GPU memory estimate
 inching nma  1UBQ.pdb -k 16 -o out     # lowest 16 non-rigid modes (default solver trlmhd; --solver jdmhd|irlmhd)
 inching animate 1UBQ.pdb out/1UBQ_eigvec.npy --modes 0-5 --amplitude 2 -o out
