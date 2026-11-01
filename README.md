@@ -19,10 +19,20 @@ Here's a Google Colab notebook running on a T4 GPU for free. For performant comp
 
 ## Install and use (v1.1+)
 
+Requirements: Linux, an NVIDIA GPU, Python >= 3.11.
+
+Option A, conda (recommended; everything incl. CUDA libraries comes from conda-forge):
 ```
-conda install -c conda-forge inching      # Linux + NVIDIA GPU; pulls CuPy, PyTorch, OpenMM, MDTraj from conda-forge
+conda create -n inching -c conda-forge inching
+conda activate inching
 ```
 Activate the environment before running (CuPy compiles its kernels with the CUDA headers of the environment).
+
+Option B, pip, on top of an existing CUDA 12 PyTorch install (what Google Colab does):
+```
+pip install openmm mdtraj cupy-cuda12x torch numpy scipy pandas matplotlib seaborn plotly tqdm
+pip install --no-deps git+https://github.com/jhmlam/Inching.git@v1.1
+```
 
 Example on ubiquitin (PDB 1UBQ, 660 atoms):
 ```
