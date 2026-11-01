@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "inching"
+version = "1.1"
+description = "Scalable computation of anisotropic vibrations for large macromolecular assemblies"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{name = "Jordy Homing Lam"}]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "matplotlib",
+    "seaborn",
+    "plotly",
+    "tqdm",
+    "torch",
+    "cupy>=12",
+    "openmm",
+    "mdtraj",
+]
+
+[project.scripts]
+inching = "inching.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/jhmlam/Inching"
+
+[tool.setuptools.packages.find]
+include = ["inching*"]

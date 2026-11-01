@@ -17,6 +17,23 @@ Here's a Google Colab notebook running on a T4 GPU for free. For performant comp
 
 
 
+## Install and use (v1.1+)
+
+```
+conda install -c conda-forge inching      # Linux + NVIDIA GPU (CuPy, PyTorch, OpenMM from conda-forge)
+inching info  structure.cif               # size, sparsity, memory estimate (CPU only)
+inching nma   structure.cif -k 64 -o out  # lowest 64 modes -> out/structure_eigval.npy, _eigvec.npy, _nma.json
+inching animate structure.cif out/structure_eigvec.npy --modes 0-5 -o out   # multi-model cif per mode
+```
+
+`import inching` in Python; see `inching/cli.py` for the API used by the commands and
+`Notebook/Application` for the notebook workflow. Solvers: `--solver trlmhd` (default), `jdmhd`, `irlmhd`.
+
+**Published version.** The code used in the paper is tag [`v1.0`](https://github.com/jhmlam/Inching/tree/v1.0)
+(Zenodo [10.5281/zenodo.10645601](https://doi.org/10.5281/zenodo.10645601), package name `InchingLiteInteger`).
+v1.1 renames the package to `inching`, adds the CLI and runs on current CuPy 14 / PyTorch 2 / CUDA 12-13;
+the algorithms are unchanged. The Google Colab notebook still targets v1.0 and CUDA 11.
+
 ## Our Contributions
 - [x] Developed a Globally-Sparse-Yet-Locally-Dense computational approach applicable to both small- and large- macromolecules.
 - [x] Implemented several GPU-resident Eigensolvers for Sparse Symmetric Matrices (Jacobi Davidson Method, Thick Restart Lanczos Method, Implicitly Restarted Lanczos Method)
