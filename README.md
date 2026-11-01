@@ -21,9 +21,9 @@ Here's a Google Colab notebook running on a T4 GPU for free. For performant comp
 
 Requirements: Linux, an NVIDIA GPU, Python >= 3.11.
 
-Option A, conda (recommended; everything incl. CUDA libraries comes from conda-forge):
+Option A, conda (recommended; everything incl. CUDA libraries comes from conda-forge, `inching` itself from the `jhmlam` channel):
 ```
-conda create -n inching -c conda-forge inching
+conda create -n inching -c conda-forge -c jhmlam inching
 conda activate inching
 ```
 Activate the environment before running (CuPy compiles its kernels with the CUDA headers of the environment).
